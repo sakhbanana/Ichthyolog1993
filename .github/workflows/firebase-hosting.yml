@@ -11,10 +11,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Убираем сборку, если сайт статический
+      # Если нет npm сборки, можно убрать
       # - run: npm ci && npm run build
 
-      - uses: FirebaseExtended/action-hosting-deploy@v0
+      - uses: FirebaseExtended/action-hosting-deploy@v1
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseToken: ${{ secrets.FIREBASE_TOKEN }}
