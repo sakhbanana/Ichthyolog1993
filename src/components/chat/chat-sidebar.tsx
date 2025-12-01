@@ -5,7 +5,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Bell, LogOut, Settings, Moon, Sun } from 'lucide-react';
+import { Bell, LogOut, Settings, Trash2 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -13,9 +13,22 @@ import { Logo } from '../logo';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import Image from 'next/image';
-import { useFirestore, updateDocumentNonBlocking } from '@/firebase';
-import { doc } from 'firebase/firestore';
+import { useAuth, useFirestore, updateDocumentNonBlocking } from '@/firebase';
+import { doc, deleteDoc } from 'firebase/firestore';
+import { deleteUser } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+import { useRouter } from 'next/navigation';
 
 
 interface ChatSidebarProps {
@@ -25,7 +38,9 @@ interface ChatSidebarProps {
 
 export function ChatSidebar({ users, currentUser }: ChatSidebarProps) {
   const firestore = useFirestore();
+  const auth = useAuth();
   const { toast } = useToast();
+  const router = useRouter();
 
   const handleAvatarChange = (newAvatarUrl: string) => {
     if (!currentUser) return;
@@ -37,6 +52,42 @@ export function ChatSidebar({ users, currentUser }: ChatSidebarProps) {
       title: "Аватар обновлен",
       description: "Ваш новый аватар был успешно сохранен.",
     });
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!auth.currentUser) return;
+
+    try {
+      const userId = auth.currentUser.uid;
+      
+      // Delete user document from Firestore
+      const userDocRef = doc(firestore, 'users', userId);
+      await deleteDoc(userDocRef);
+
+      // Delete user from Auth
+      await deleteUser(auth.currentUser);
+      
+      toast({
+        title: "Аккаунт удален",
+        description: "Ваш аккаунт был успешно удален.",
+      });
+
+      router.push('/login');
+
+    } catch (error: any) {
+      console.error("Error deleting account:", error);
+      
+      let description = "Произошла ошибка при удалении аккаунта.";
+      if (error.code === 'auth/requires-recent-login') {
+        description = "Для выполнения этой операции требуется недавний вход в систему. Пожалуйста, войдите снова и повторите попытку.";
+      }
+      
+      toast({
+        variant: 'destructive',
+        title: "Ошибка удаления",
+        description,
+      });
+    }
   };
   
   const userAvatars = PlaceHolderImages.filter(img => img.id.startsWith('user'));
@@ -117,6 +168,25 @@ export function ChatSidebar({ users, currentUser }: ChatSidebarProps) {
             <p className="truncate font-semibold">{currentUser.name}</p>
             <p className="text-xs text-muted-foreground">В сети</p>
           </div>
+           <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
+                    <Trash2 className="h-4 w-4" />
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Вы уверены?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Это действие невозможно отменить. Ваш аккаунт и все связанные с ним данные будут безвозвратно удалены.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Отмена</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleDeleteAccount} className={buttonVariants({ variant: "destructive" })}>Удалить</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" asChild>
             <a href="/login">
               <LogOut className="h-4 w-4" />
