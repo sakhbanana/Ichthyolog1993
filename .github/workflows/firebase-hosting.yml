@@ -11,14 +11,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Если нет npm сборки, можно убрать
+      # Если у тебя есть сборка npm
       # - run: npm ci && npm run build
 
-      - uses: FirebaseExtended/action-hosting-deploy@v1
+      - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseToken: ${{ secrets.FIREBASE_TOKEN }}
-          channelId: live
           projectId: studio-151048688
+          channelId: live
     env:
       GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
