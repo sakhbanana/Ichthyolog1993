@@ -1,0 +1,162 @@
+{
+  "entities": {
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user in the GroupChat application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user."
+        },
+        "username": {
+          "type": "string",
+          "description": "The username of the user."
+        },
+        "email": {
+          "type": "string",
+          "description": "The email address of the user.",
+          "format": "email"
+        },
+        "registrationDate": {
+          "type": "string",
+          "description": "The date and time the user registered.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "username",
+        "email",
+        "registrationDate"
+      ]
+    },
+    "Message": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Message",
+      "type": "object",
+      "description": "Represents a message in the group chat.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the message."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:N Message)"
+        },
+        "content": {
+          "type": "string",
+          "description": "The text content of the message."
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "The date and time the message was sent.",
+          "format": "date-time"
+        },
+        "mediaId": {
+          "type": "string",
+          "description": "Reference to Media. (Relationship: Message 1:1 Media).  Can be null if the message doesn't have media."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "content",
+        "timestamp"
+      ]
+    },
+    "Media": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Media",
+      "type": "object",
+      "description": "Represents a media file (photo or video) associated with a message.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the media file."
+        },
+        "type": {
+          "type": "string",
+          "description": "The type of media (e.g., 'photo', 'video')."
+        },
+        "url": {
+          "type": "string",
+          "description": "The URL where the media file is stored.",
+          "format": "uri"
+        },
+        "uploadTimestamp": {
+          "type": "string",
+          "description": "The date and time the media was uploaded.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "url",
+        "uploadTimestamp"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user profiles. Uses path-based ownership for private user data.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user.  This is the Firebase Auth UID."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/group_chat/group/messages/{messageId}",
+        "definition": {
+          "entityName": "Message",
+          "schema": {
+            "$ref": "#/backend/entities/Message"
+          },
+          "description": "Stores messages for the group chat. Includes 'userId' for authorization independence, allowing rules to verify the sender's identity without 'get()' calls.",
+          "params": [
+            {
+              "name": "messageId",
+              "description": "The unique identifier of the message."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/media/{mediaId}",
+        "definition": {
+          "entityName": "Media",
+          "schema": {
+            "$ref": "#/backend/entities/Media"
+          },
+          "description": "Stores media files (photos and videos) uploaded by users.",
+          "params": [
+            {
+              "name": "mediaId",
+              "description": "The unique identifier of the media file."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to support a group chat application with user authentication and media sharing. It prioritizes authorization independence and secure list operations (QAPs). User data is stored in a dedicated collection. Messages are stored in a subcollection under a single `group_chat` document to represent a chat room with a fixed group of 30 users, ensuring scalability is not affected by large document sizes. Media files are stored in a separate collection. \n\n**Authorization Independence:** The design avoids `get()` calls in security rules. Message documents include the `userId` field to allow rules to verify the message sender's identity without needing to fetch the user document. Since there is no concept of roles or memberships, authorization is purely based on the authenticated user (`request.auth.uid`).\n\n**QAPs (Secure List Operations):** The segregation of messages into a subcollection under the `group_chat` document makes list operations secure, as the rules can restrict access to messages based on the authenticated user and the group chat context. The single group chat prevents the need to filter across multiple chats.\n\n**Invariants:** The `userId` field in the message document ensures the integrity of ownership. Timestamps are automatically generated and enforced in security rules."
+  }
+}

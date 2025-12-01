@@ -1,0 +1,100 @@
+/**
+ * This ruleset defines the security model for a group chat application.
+ *
+ * Core Philosophy:
+ * The security model is designed for a single, shared group chat room. It operates
+ * on two main principles:
+ * 1. User-Owned Profiles: Each user has complete control over their own user profile
+ *    document and no access to others'.
+ * 2. Shared Chat, Owned Messages: All authenticated users can read the main group
+ *    chat, but they can only create, modify, or delete their own messages. This
+ *    prevents users from tampering with others' content while allowing open
+ *    conversation.
+ *
+ * Data Structure:
+ * - /users/{userId}: Stores private user profile data. Access is restricted to the
+ *   document owner.
+ * - /group_chat/group/messages/{messageId}: A single collection containing all
+ *   messages for the group chat. This structure is simple and secure for a
+ *   fixed-size chat room.
+ * - /media/{mediaId}: A top-level collection for storing uploaded media files.
+ *
+ * Key Security Decisions:
+ * - Authenticated Access Only: All read and write operations require the user to be
+ *   signed in. There is no public, unauthenticated access.
+ * - No User Enumeration: Listing documents from the top-level `/users` collection
+ *   is explicitly disallowed to protect user privacy.
+ * - Immutable Media: Once a media file is uploaded, it cannot be changed or deleted
+ *   via client-side requests. This simplifies security as ownership is not tracked
+ *   on media documents.
+ *
+ * Denormalization for Authorization:
+ * To ensure fast and secure authorization checks, the `messages` documents contain a
+ * denormalized `userId` field. This allows rules to verify message ownership directly
+ * from the document's data without performing costly and slow `get()` operations on
+ * other collections.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions for reusable logic
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Checks for ownership on an existing document. Used for update/delete.
+    function isExistingOwner(userId) {
+      return isOwner(userId) && resource != null;
+    }
+
+    /**
+     * @description Users can create, read, update, and delete their own profile document.
+     * @path /users/{userId}
+     * @allow A user with UID 'user123' can (get) their own profile at `/users/user123`.
+     * @deny A user with UID 'user456' cannot (get) the profile at `/users/user123`. User enumeration is also denied.
+     * @principle Restricts access to a user's own data tree and prevents enumeration of other users.
+     */
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow list: if false;
+      allow create: if isOwner(userId) && request.resource.data.id == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description All authenticated users can read messages, but only the author can write or delete them.
+     * @path /group_chat/group/messages/{messageId}
+     * @allow Any authenticated user can (list) messages. A user 'user123' can (create) a message with `userId: 'user123'`.
+     * @deny A user 'user456' cannot (update) a message where `resource.data.userId` is 'user123'.
+     * @principle Enforces public read access (for signed-in users) with strict document ownership for all writes.
+     */
+    match /group_chat/group/messages/{messageId} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update: if isExistingOwner(resource.data.userId) && request.resource.data.userId == resource.data.userId;
+      allow delete: if isExistingOwner(resource.data.userId);
+    }
+
+    /**
+     * @description Media files are readable by all authenticated users. They can be created but not modified or deleted.
+     * @path /media/{mediaId}
+     * @allow Any authenticated user can (get) a media file at `/media/media123` or (create) a new one.
+     * @deny Any user attempting to (update) or (delete) an existing media file will be denied, as ownership is not tracked.
+     * @principle Immutability for shared resources. Since ownership cannot be securely determined from the media document itself, destructive actions are disabled for security.
+     */
+    match /media/{mediaId} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if false;
+      allow delete: if false;
+    }
+  }
+}
