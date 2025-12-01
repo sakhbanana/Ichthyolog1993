@@ -1,10 +1,10 @@
 {
   "name": "Ихтиологи 1993",
-  "short_name": "Ихтиологи",
+  "short_name": "Ихтиологи 1993",
   "description": "Мессенджер для вашей группы.",
-  "start_url": "/chat",
+  "start_url": "/",
   "display": "standalone",
-  "background_color": "#E9E5F3",
+  "background_color": "#4527A0",
   "theme_color": "#673AB7",
   "icons": [
     {
