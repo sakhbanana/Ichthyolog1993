@@ -5,6 +5,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { useRouter } from 'next/navigation';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { useAuth } from '@/firebase';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -39,6 +41,7 @@ const formSchema = z.object({
 export function LoginForm() {
   const router = useRouter();
   const { toast } = useToast();
+  const auth = useAuth();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -48,13 +51,22 @@ export function LoginForm() {
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
-    toast({
-      title: 'Вход выполнен успешно',
-      description: 'С возвращением!',
-    });
-    router.push('/chat');
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    try {
+      await signInWithEmailAndPassword(auth, values.email, values.password);
+      toast({
+        title: 'Вход выполнен успешно',
+        description: 'С возвращением!',
+      });
+      router.push('/chat');
+    } catch (error: any) {
+      console.error(error);
+      toast({
+        variant: 'destructive',
+        title: 'Ошибка входа',
+        description: 'Неверный email или пароль. Попробуйте снова.',
+      });
+    }
   }
 
   return (
@@ -95,8 +107,8 @@ export function LoginForm() {
                 </FormItem>
               )}
             />
-            <Button type="submit" className="w-full !mt-6 bg-accent hover:bg-accent/90">
-              Войти
+            <Button type="submit" className="w-full !mt-6 bg-accent hover:bg-accent/90" disabled={form.formState.isSubmitting}>
+              {form.formState.isSubmitting ? 'Вход...' : 'Войти'}
             </Button>
           </form>
         </Form>

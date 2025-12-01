@@ -5,6 +5,9 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { useRouter } from 'next/navigation';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { useAuth, useFirestore, setDocumentNonBlocking } from '@/firebase';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -26,6 +29,7 @@ import {
 } from '@/components/ui/card';
 import { Logo } from '@/components/logo';
 import { useToast } from '@/hooks/use-toast';
+import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -42,6 +46,8 @@ const formSchema = z.object({
 export function SignUpForm() {
   const router = useRouter();
   const { toast } = useToast();
+  const auth = useAuth();
+  const firestore = useFirestore();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -52,13 +58,43 @@ export function SignUpForm() {
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
-    toast({
-      title: 'Аккаунт создан',
-      description: 'Теперь вы можете войти в свой новый аккаунт.',
-    });
-    router.push('/login');
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
+      const user = userCredential.user;
+
+      const userDocRef = doc(firestore, 'users', user.uid);
+      
+      // Select a random avatar
+      const userAvatars = PlaceHolderImages.filter(img => img.id.startsWith('user'));
+      const randomAvatar = userAvatars[Math.floor(Math.random() * userAvatars.length)];
+
+      setDocumentNonBlocking(userDocRef, {
+        id: user.uid,
+        name: values.name,
+        email: values.email,
+        avatar: randomAvatar.imageUrl,
+        online: true, // Set initial online status
+        registrationDate: serverTimestamp(),
+      }, { merge: true });
+
+      toast({
+        title: 'Аккаунт создан',
+        description: 'Теперь вы можете войти в свой новый аккаунт.',
+      });
+      router.push('/login');
+    } catch (error: any) {
+      console.error(error);
+      let description = 'Произошла ошибка при регистрации. Попробуйте снова.';
+      if (error.code === 'auth/email-already-in-use') {
+        description = 'Этот адрес электронной почты уже используется.';
+      }
+      toast({
+        variant: 'destructive',
+        title: 'Ошибка регистрации',
+        description,
+      });
+    }
   }
 
   return (
@@ -112,8 +148,8 @@ export function SignUpForm() {
                 </FormItem>
               )}
             />
-            <Button type="submit" className="w-full !mt-6 bg-accent hover:bg-accent/90">
-              Создать аккаунт
+            <Button type="submit" className="w-full !mt-6 bg-accent hover:bg-accent/90" disabled={form.formState.isSubmitting}>
+              {form.formState.isSubmitting ? 'Создание...' : 'Создать аккаунт'}
             </Button>
           </form>
         </Form>

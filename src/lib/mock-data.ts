@@ -6,11 +6,11 @@ const getImage = (id: string) => PlaceHolderImages.find(img => img.id === id)?.i
 const getHint = (id: string) => PlaceHolderImages.find(img => img.id === id)?.imageHint || '';
 
 export const users: User[] = [
-  { id: 'user1', name: 'Алекс', avatar: getImage('user1'), online: true },
-  { id: 'user2', name: 'Мия', avatar: getImage('user2'), online: true },
-  { id: 'user3', name: 'Сэм', avatar: getImage('user3'), online: false },
-  { id: 'user4', name: 'Хлоя', avatar: getImage('user4'), online: true },
-  { id: 'user5', name: 'Бен', avatar: getImage('user5'), online: false },
+  { id: 'user1', name: 'Алекс', avatar: getImage('user1'), online: true, email: 'alex@example.com' },
+  { id: 'user2', name: 'Мия', avatar: getImage('user2'), online: true, email: 'mia@example.com' },
+  { id: 'user3', name: 'Сэм', avatar: getImage('user3'), online: false, email: 'sam@example.com' },
+  { id: 'user4', name: 'Хлоя', avatar: getImage('user4'), online: true, email: 'chloe@example.com' },
+  { id: 'user5', name: 'Бен', avatar: getImage('user5'), online: false, email: 'ben@example.com' },
 ];
 
 export const currentUser: User = users[1]; // Мия - текущий пользователь

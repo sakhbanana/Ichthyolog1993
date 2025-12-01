@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import { Paperclip, Image, Video, Send } from 'lucide-react';
+import { collection, serverTimestamp } from 'firebase/firestore';
+import { useFirestore, useUser, addDocumentNonBlocking } from '@/firebase';
 
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
@@ -15,10 +17,19 @@ import { useToast } from '@/hooks/use-toast';
 export function MessageInput() {
   const [message, setMessage] = useState('');
   const { toast } = useToast();
+  const firestore = useFirestore();
+  const { user } = useUser();
 
   const handleSend = () => {
-    if (message.trim()) {
-      console.log('Sending message:', message);
+    if (message.trim() && user) {
+      const messagesColRef = collection(firestore, 'group_chat/group/messages');
+      
+      addDocumentNonBlocking(messagesColRef, {
+        authorId: user.uid,
+        text: message.trim(),
+        timestamp: serverTimestamp(),
+      });
+
       setMessage('');
       toast({
           title: "Сообщение отправлено",
@@ -74,7 +85,7 @@ export function MessageInput() {
           size="icon"
           className="h-8 w-8 bg-accent hover:bg-accent/90"
           onClick={handleSend}
-          disabled={!message.trim()}
+          disabled={!message.trim() || !user}
         >
           <Send className="h-4 w-4" />
           <span className="sr-only">Отправить</span>
