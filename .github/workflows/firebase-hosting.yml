@@ -24,4 +24,4 @@ jobs:
       - name: Deploy to Firebase Hosting
         run: |
           export GOOGLE_APPLICATION_CREDENTIALS="$HOME/firebase-key.json"
-          firebase deploy --only hosting --project studio-151048688
+          firebase deploy --only hosting --project studio-151048688-101d3
