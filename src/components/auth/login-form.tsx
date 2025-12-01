@@ -6,7 +6,8 @@ import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { useRouter } from 'next/navigation';
 import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
-import { useAuth } from '@/firebase';
+import { useAuth, useUser } from '@/firebase';
+import { useEffect } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -42,6 +43,26 @@ export function LoginForm() {
   const router = useRouter();
   const { toast } = useToast();
   const auth = useAuth();
+  const { user, isUserLoading } = useUser();
+
+  useEffect(() => {
+    if (!isUserLoading && user) {
+        if (!user.emailVerified) {
+             signOut(auth);
+             toast({
+                 variant: 'destructive',
+                 title: 'Email не подтвержден',
+                 description: 'Пожалуйста, проверьте свою почту и перейдите по ссылке для подтверждения.',
+             });
+        } else {
+            toast({
+              title: 'Вход выполнен успешно',
+              description: 'С возвращением!',
+            });
+            router.push('/chat');
+        }
+    }
+  }, [user, isUserLoading, router, auth, toast]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -52,33 +73,15 @@ export function LoginForm() {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    try {
-      const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
-      const user = userCredential.user;
-
-      if (!user.emailVerified) {
-        await signOut(auth);
-        toast({
-            variant: 'destructive',
-            title: 'Email не подтвержден',
-            description: 'Пожалуйста, проверьте свою почту и перейдите по ссылке для подтверждения.',
+    signInWithEmailAndPassword(auth, values.email, values.password)
+        .catch((error: any) => {
+            console.error(error);
+            toast({
+                variant: 'destructive',
+                title: 'Ошибка входа',
+                description: 'Неверный email или пароль. Попробуйте снова.',
+            });
         });
-        return;
-      }
-
-      toast({
-        title: 'Вход выполнен успешно',
-        description: 'С возвращением!',
-      });
-      router.push('/chat');
-    } catch (error: any) {
-      console.error(error);
-      toast({
-        variant: 'destructive',
-        title: 'Ошибка входа',
-        description: 'Неверный email или пароль. Попробуйте снова.',
-      });
-    }
   }
 
   return (
