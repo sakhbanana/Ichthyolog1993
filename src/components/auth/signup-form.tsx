@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { useRouter } from 'next/navigation';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { useAuth, useFirestore, setDocumentNonBlocking } from '@/firebase';
 
@@ -63,6 +63,8 @@ export function SignUpForm() {
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
       const user = userCredential.user;
 
+      await sendEmailVerification(user);
+
       const userDocRef = doc(firestore, 'users', user.uid);
       
       // Select a random avatar
@@ -79,8 +81,8 @@ export function SignUpForm() {
       }, { merge: true });
 
       toast({
-        title: 'Аккаунт создан',
-        description: 'Теперь вы можете войти в свой новый аккаунт.',
+        title: 'Аккаунт почти готов!',
+        description: 'Мы отправили письмо для подтверждения на вашу почту.',
       });
       router.push('/login');
     } catch (error: any) {

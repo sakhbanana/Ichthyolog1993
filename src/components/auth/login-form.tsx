@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { useRouter } from 'next/navigation';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import { useAuth } from '@/firebase';
 
 import { Button } from '@/components/ui/button';
@@ -53,7 +53,19 @@ export function LoginForm() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
-      await signInWithEmailAndPassword(auth, values.email, values.password);
+      const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
+      const user = userCredential.user;
+
+      if (!user.emailVerified) {
+        await signOut(auth);
+        toast({
+            variant: 'destructive',
+            title: 'Email не подтвержден',
+            description: 'Пожалуйста, проверьте свою почту и перейдите по ссылке для подтверждения.',
+        });
+        return;
+      }
+
       toast({
         title: 'Вход выполнен успешно',
         description: 'С возвращением!',
