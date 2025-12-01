@@ -106,7 +106,7 @@ export function SignUpForm() {
           <Logo />
         </div>
         <CardTitle className="text-2xl font-headline">Создать аккаунт</CardTitle>
-        <CardDescription>Введите свои данные, чтобы начать работу с Ихтиологи 1993</CardDescription>
+        <CardDescription>Присоединяйтесь к чату, введя свои данные.</CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>

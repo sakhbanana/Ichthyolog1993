@@ -63,8 +63,7 @@ export default function ChatPage() {
             <div className="flex items-center gap-2">
               <Skeleton className="h-8 w-8" />
               <div className="hidden items-center gap-2 md:flex">
-                <Logo />
-                <h1 className="text-lg font-semibold font-headline">Ихтиологи 1993</h1>
+                <Skeleton className="h-6 w-32" />
               </div>
             </div>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -96,9 +95,9 @@ export default function ChatPage() {
           <header className="flex h-16 shrink-0 items-center justify-between border-b bg-card px-4 md:px-6">
             <div className="flex items-center gap-2">
               <SidebarTrigger className="md:hidden" />
-              <div className="hidden items-center gap-2 md:flex">
+              <div className="flex items-center gap-2">
                 <Logo />
-                <h1 className="text-lg font-semibold font-headline">Ихтиологи 1993</h1>
+                <h1 className="text-lg font-semibold font-headline">Групповой чат</h1>
               </div>
             </div>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
