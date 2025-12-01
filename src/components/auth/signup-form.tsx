@@ -29,13 +29,13 @@ import { useToast } from '@/hooks/use-toast';
 
 const formSchema = z.object({
   name: z.string().min(2, {
-    message: 'Name must be at least 2 characters.',
+    message: 'Имя должно состоять не менее чем из 2 символов.',
   }),
   email: z.string().email({
-    message: 'Please enter a valid email address.',
+    message: 'Пожалуйста, введите действительный адрес электронной почты.',
   }),
   password: z.string().min(8, {
-    message: 'Password must be at least 8 characters.',
+    message: 'Пароль должен состоять не менее чем из 8 символов.',
   }),
 });
 
@@ -55,8 +55,8 @@ export function SignUpForm() {
   function onSubmit(values: z.infer<typeof formSchema>) {
     console.log(values);
     toast({
-      title: 'Account Created',
-      description: 'You can now sign in with your new account.',
+      title: 'Аккаунт создан',
+      description: 'Теперь вы можете войти в свой новый аккаунт.',
     });
     router.push('/login');
   }
@@ -67,8 +67,8 @@ export function SignUpForm() {
         <div className="mb-4 flex justify-center">
           <Logo />
         </div>
-        <CardTitle className="text-2xl font-headline">Create an Account</CardTitle>
-        <CardDescription>Enter your details to get started with GroupChat</CardDescription>
+        <CardTitle className="text-2xl font-headline">Создать аккаунт</CardTitle>
+        <CardDescription>Введите свои данные, чтобы начать работу с GroupChat</CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -78,9 +78,9 @@ export function SignUpForm() {
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Name</FormLabel>
+                  <FormLabel>Имя</FormLabel>
                   <FormControl>
-                    <Input placeholder="Your Name" {...field} />
+                    <Input placeholder="Ваше Имя" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -91,7 +91,7 @@ export function SignUpForm() {
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email</FormLabel>
+                  <FormLabel>Электронная почта</FormLabel>
                   <FormControl>
                     <Input placeholder="name@example.com" {...field} />
                   </FormControl>
@@ -104,7 +104,7 @@ export function SignUpForm() {
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Password</FormLabel>
+                  <FormLabel>Пароль</FormLabel>
                   <FormControl>
                     <Input type="password" placeholder="********" {...field} />
                   </FormControl>
@@ -113,16 +113,16 @@ export function SignUpForm() {
               )}
             />
             <Button type="submit" className="w-full !mt-6 bg-accent hover:bg-accent/90">
-              Create Account
+              Создать аккаунт
             </Button>
           </form>
         </Form>
       </CardContent>
       <CardFooter className="flex flex-col gap-4">
         <p className="text-sm text-muted-foreground">
-          Already have an account?{' '}
+          Уже есть аккаунт?{' '}
           <Link href="/login" className="font-semibold text-primary hover:underline">
-            Sign In
+            Войти
           </Link>
         </p>
       </CardFooter>

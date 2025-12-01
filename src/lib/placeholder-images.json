@@ -2,45 +2,45 @@
   "placeholderImages": [
     {
       "id": "user1",
-      "description": "Avatar for Alex",
+      "description": "Аватар для Алекса",
       "imageUrl": "https://images.unsplash.com/photo-1594672830234-ba4cfe1202dc?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8bWFuJTIwcG9ydHJhaXR8ZW58MHx8fHwxNzY0NDgwMjg4fDA&ixlib=rb-4.1.0&q=80&w=1080",
-      "imageHint": "man portrait"
+      "imageHint": "мужской портрет"
     },
     {
       "id": "user2",
-      "description": "Avatar for Mia",
+      "description": "Аватар для Мии",
       "imageUrl": "https://images.unsplash.com/photo-1557053910-d9eadeed1c58?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHx3b21hbiUyMHBvcnRyYWl0fGVufDB8fHx8MTc2NDQ3MTgwMXww&ixlib=rb-4.1.0&q=80&w=1080",
-      "imageHint": "woman portrait"
+      "imageHint": "женский портрет"
     },
     {
       "id": "user3",
-      "description": "Avatar for Sam",
+      "description": "Аватар для Сэма",
       "imageUrl": "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxwZXJzb24lMjBwb3J0cmFpdHxlbnwwfHx8fDE3NjQ0NTkzNjF8MA&ixlib=rb-4.1.0&q=80&w=1080",
-      "imageHint": "person portrait"
+      "imageHint": "портрет человека"
     },
     {
       "id": "user4",
-      "description": "Avatar for Chloe",
+      "description": "Аватар для Хлои",
       "imageUrl": "https://images.unsplash.com/photo-1589268579398-1be8358506ab?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8d29tYW4lMjBzbWlsZXxlbnwwfHx8fDE3NjQ1MDUzOTF8MA&ixlib=rb-4.1.0&q=80&w=1080",
-      "imageHint": "woman smile"
+      "imageHint": "улыбающаяся женщина"
     },
     {
       "id": "user5",
-      "description": "Avatar for Ben",
+      "description": "Аватар для Бена",
       "imageUrl": "https://images.unsplash.com/photo-1621873982312-1f83e89a2f21?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxtYW4lMjBnbGFzc2VzfGVufDB8fHx8MTc2NDQ3NTg0NXww&ixlib=rb-4.1.0&q=80&w=1080",
-      "imageHint": "man glasses"
+      "imageHint": "мужчина в очках"
     },
     {
       "id": "shared_photo_1",
-      "description": "A beautiful landscape photo",
+      "description": "Красивое фото пейзажа",
       "imageUrl": "https://images.unsplash.com/photo-1668900030471-170e936b201a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxsYW5kc2NhcGUlMjBtb3VudGFpbnxlbnwwfHx8fDE3NjQ1MTQyNDJ8MA&ixlib=rb-4.1.0&q=80&w=1080",
-      "imageHint": "landscape mountain"
+      "imageHint": "пейзаж гора"
     },
     {
       "id": "shared_video_1",
-      "description": "A video of a city street",
+      "description": "Видео городской улицы",
       "imageUrl": "https://images.unsplash.com/photo-1453413453658-27fec8f43f29?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxjaXR5JTIwc3RyZWV0fGVufDB8fHx8MTc2NDQ5NTk0M3ww&ixlib=rb-4.1.0&q=80&w=1080",
-      "imageHint": "city street"
+      "imageHint": "городская улица"
     }
   ]
 }

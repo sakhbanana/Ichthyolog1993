@@ -25,7 +25,7 @@ export default function ChatPage() {
             </div>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Users className="h-5 w-5" />
-              <span>{users.length} Members</span>
+              <span>{users.length} Участников</span>
             </div>
           </header>
           <main className="flex-1 overflow-hidden">

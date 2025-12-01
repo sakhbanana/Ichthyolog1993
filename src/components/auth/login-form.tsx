@@ -29,10 +29,10 @@ import { useToast } from '@/hooks/use-toast';
 
 const formSchema = z.object({
   email: z.string().email({
-    message: 'Please enter a valid email address.',
+    message: 'Пожалуйста, введите действительный адрес электронной почты.',
   }),
   password: z.string().min(8, {
-    message: 'Password must be at least 8 characters.',
+    message: 'Пароль должен состоять не менее чем из 8 символов.',
   }),
 });
 
@@ -51,8 +51,8 @@ export function LoginForm() {
   function onSubmit(values: z.infer<typeof formSchema>) {
     console.log(values);
     toast({
-      title: 'Login Successful',
-      description: 'Welcome back!',
+      title: 'Вход выполнен успешно',
+      description: 'С возвращением!',
     });
     router.push('/chat');
   }
@@ -63,8 +63,8 @@ export function LoginForm() {
         <div className="mb-4 flex justify-center">
           <Logo />
         </div>
-        <CardTitle className="text-2xl font-headline">Welcome to GroupChat</CardTitle>
-        <CardDescription>Enter your credentials to access your account</CardDescription>
+        <CardTitle className="text-2xl font-headline">Добро пожаловать в GroupChat</CardTitle>
+        <CardDescription>Введите свои учетные данные для доступа к вашему аккаунту</CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -74,7 +74,7 @@ export function LoginForm() {
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email</FormLabel>
+                  <FormLabel>Электронная почта</FormLabel>
                   <FormControl>
                     <Input placeholder="name@example.com" {...field} />
                   </FormControl>
@@ -87,7 +87,7 @@ export function LoginForm() {
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Password</FormLabel>
+                  <FormLabel>Пароль</FormLabel>
                   <FormControl>
                     <Input type="password" placeholder="********" {...field} />
                   </FormControl>
@@ -96,16 +96,16 @@ export function LoginForm() {
               )}
             />
             <Button type="submit" className="w-full !mt-6 bg-accent hover:bg-accent/90">
-              Sign In
+              Войти
             </Button>
           </form>
         </Form>
       </CardContent>
       <CardFooter className="flex flex-col gap-4">
         <p className="text-sm text-muted-foreground">
-          Don't have an account?{' '}
+          Нет аккаунта?{' '}
           <Link href="/signup" className="font-semibold text-primary hover:underline">
-            Sign up
+            Зарегистрироваться
           </Link>
         </p>
       </CardFooter>

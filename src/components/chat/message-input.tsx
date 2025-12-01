@@ -21,23 +21,23 @@ export function MessageInput() {
       console.log('Sending message:', message);
       setMessage('');
       toast({
-          title: "Message Sent",
-          description: "Your message has been sent successfully.",
+          title: "Сообщение отправлено",
+          description: "Ваше сообщение было успешно отправлено.",
       });
     }
   };
   
-  const handleFileUpload = (fileType: 'Photo' | 'Video') => {
+  const handleFileUpload = (fileType: 'Фото' | 'Видео') => {
       toast({
-          title: `${fileType} Upload`,
-          description: `This is a placeholder for ${fileType.toLowerCase()} uploading.`,
+          title: `Загрузка ${fileType}`,
+          description: `Это заглушка для загрузки ${fileType.toLowerCase()}.`,
       })
   }
 
   return (
     <div className="relative">
       <Textarea
-        placeholder="Type a message..."
+        placeholder="Введите сообщение..."
         value={message}
         onChange={(e) => setMessage(e.target.value)}
         onKeyDown={(e) => {
@@ -53,18 +53,18 @@ export function MessageInput() {
           <PopoverTrigger asChild>
             <Button variant="ghost" size="icon" className="h-8 w-8">
               <Paperclip className="h-4 w-4" />
-              <span className="sr-only">Attach file</span>
+              <span className="sr-only">Прикрепить файл</span>
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-auto p-2">
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={() => handleFileUpload('Photo')}>
+              <Button variant="outline" size="sm" onClick={() => handleFileUpload('Фото')}>
                 <Image className="mr-2 h-4 w-4" />
-                Photo
+                Фото
               </Button>
-              <Button variant="outline" size="sm" onClick={() => handleFileUpload('Video')}>
+              <Button variant="outline" size="sm" onClick={() => handleFileUpload('Видео')}>
                 <Video className="mr-2 h-4 w-4" />
-                Video
+                Видео
               </Button>
             </div>
           </PopoverContent>
@@ -77,7 +77,7 @@ export function MessageInput() {
           disabled={!message.trim()}
         >
           <Send className="h-4 w-4" />
-          <span className="sr-only">Send</span>
+          <span className="sr-only">Отправить</span>
         </Button>
       </div>
     </div>

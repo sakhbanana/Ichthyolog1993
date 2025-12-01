@@ -9,7 +9,7 @@ export interface Message {
   id: string;
   authorId: string;
   text: string;
-  timestamp: string;
+  timestamp: string | Date;
   media?: {
     type: 'image' | 'video';
     url: string;

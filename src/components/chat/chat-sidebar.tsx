@@ -25,7 +25,7 @@ export function ChatSidebar({ users, currentUser }: ChatSidebarProps) {
       </div>
       <ScrollArea className="flex-1">
         <div className="p-4">
-          <h2 className="mb-2 text-sm font-semibold text-muted-foreground">Members</h2>
+          <h2 className="mb-2 text-sm font-semibold text-muted-foreground">Участники</h2>
           <ul className="space-y-2">
             {users.map((user) => (
               <li key={user.id}>
@@ -42,7 +42,7 @@ export function ChatSidebar({ users, currentUser }: ChatSidebarProps) {
                   <span className="font-medium">{user.name}</span>
                   {user.id === currentUser.id && (
                     <Badge variant="outline" className="ml-auto">
-                      You
+                      Вы
                     </Badge>
                   )}
                 </div>
@@ -56,7 +56,7 @@ export function ChatSidebar({ users, currentUser }: ChatSidebarProps) {
         <div className="flex items-center justify-between py-2">
             <div className="flex items-center gap-2">
                 <Bell className="h-4 w-4" />
-                <Label htmlFor="push-notifications" className="text-sm">Push Notifications</Label>
+                <Label htmlFor="push-notifications" className="text-sm">Push-уведомления</Label>
             </div>
             <Switch id="push-notifications" />
         </div>
@@ -70,7 +70,7 @@ export function ChatSidebar({ users, currentUser }: ChatSidebarProps) {
           </Avatar>
           <div className="flex-1 overflow-hidden">
             <p className="truncate font-semibold">{currentUser.name}</p>
-            <p className="text-xs text-muted-foreground">Online</p>
+            <p className="text-xs text-muted-foreground">В сети</p>
           </div>
           <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" asChild>
             <a href="/login">
