@@ -8,7 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { Bell, LogOut, Settings, Trash2 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { Logo } from '../logo';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
