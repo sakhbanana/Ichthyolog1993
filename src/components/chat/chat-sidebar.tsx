@@ -20,7 +20,7 @@ export function ChatSidebar({ users, currentUser }: ChatSidebarProps) {
       <div className="flex h-16 items-center border-b border-sidebar-border px-4">
         <div className="flex items-center gap-2">
           <Logo />
-          <h1 className="text-lg font-semibold font-headline">GroupChat</h1>
+          <h1 className="text-lg font-semibold font-headline">Ихтиологи 1993</h1>
         </div>
       </div>
       <ScrollArea className="flex-1">

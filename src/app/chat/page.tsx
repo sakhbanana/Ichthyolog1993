@@ -20,7 +20,7 @@ export default function ChatPage() {
               <SidebarTrigger className="md:hidden" />
               <div className="hidden items-center gap-2 md:flex">
                 <Logo />
-                <h1 className="text-lg font-semibold font-headline">GroupChat</h1>
+                <h1 className="text-lg font-semibold font-headline">Ихтиологи 1993</h1>
               </div>
             </div>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">

@@ -3,7 +3,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 
 export const metadata: Metadata = {
-  title: 'GroupChat',
+  title: 'Ихтиологи 1993',
   description: 'Мессенджер для вашей группы.',
 };
 

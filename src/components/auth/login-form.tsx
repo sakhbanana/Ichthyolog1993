@@ -63,7 +63,7 @@ export function LoginForm() {
         <div className="mb-4 flex justify-center">
           <Logo />
         </div>
-        <CardTitle className="text-2xl font-headline">Добро пожаловать в GroupChat</CardTitle>
+        <CardTitle className="text-2xl font-headline">Добро пожаловать в Ихтиологи 1993</CardTitle>
         <CardDescription>Введите свои учетные данные для доступа к вашему аккаунту</CardDescription>
       </CardHeader>
       <CardContent>
