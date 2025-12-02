@@ -8,12 +8,11 @@ export default function Home() {
   const { user, isUserLoading } = useUser();
 
   useEffect(() => {
-    // Ждём загрузки состояния авторизации
     if (!isUserLoading) {
       if (user) {
-        redirect('/chat'); // Пользователь авторизован
+        redirect('/chat');
       } else {
-        redirect('/login'); // Не авторизован
+        redirect('/login');
       }
     }
   }, [user, isUserLoading]);

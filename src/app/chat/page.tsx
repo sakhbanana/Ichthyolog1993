@@ -9,12 +9,10 @@ import { SidebarProvider, Sidebar, SidebarTrigger, SidebarInset } from "@/compon
 import { ChatSidebar } from "@/components/chat/chat-sidebar";
 import { ChatMessages } from "@/components/chat/chat-messages";
 import { MessageInput } from "@/components/chat/message-input";
-import { Users, PanelLeft } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Users } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { Skeleton } from '@/components/ui/skeleton';
-import { format } from 'date-fns';
-import { sub } from 'date-fns';
+import { format, sub } from 'date-fns';
 
 export default function ChatPage() {
   const router = useRouter();
@@ -26,62 +24,50 @@ export default function ChatPage() {
       router.push('/login');
     }
   }, [user, isUserLoading, router]);
-  
+
   const usersQuery = useMemoFirebase(() => collection(firestore, 'users'), [firestore]);
   const { data: users, isLoading: usersLoading } = useCollection<User>(usersQuery);
 
   const sixMonthsAgo = useMemo(() => sub(new Date(), { months: 6 }), []);
   const messagesQuery = useMemoFirebase(() => {
-      if (!firestore) return null;
-      return query(
-          collection(firestore, 'group_chat/group/messages'),
-          where('timestamp', '>=', Timestamp.fromDate(sixMonthsAgo)),
-          orderBy('timestamp', 'asc')
-      );
+    if (!firestore) return null;
+    return query(
+      collection(firestore, 'group_chat/group/messages'),
+      where('timestamp', '>=', Timestamp.fromDate(sixMonthsAgo)),
+      orderBy('timestamp', 'asc')
+    );
   }, [firestore, sixMonthsAgo]);
-  
-  const { data: messagesData, isLoading: messagesLoading } = useCollection<Omit<Message, 'timestamp' | 'id'> & { timestamp: Timestamp }>(messagesQuery);
-  
-  const messages: Message[] | null = useMemo(() => {
-    if (!messagesData) return null;
+
+  const { data: messagesData, isLoading: messagesLoading } = useCollection<Message>(messagesQuery);
+
+  const messages = useMemo(() => {
+    if (!messagesData) return [];
     return messagesData.map(msg => ({
       ...msg,
       timestamp: msg.timestamp ? format(msg.timestamp.toDate(), 'HH:mm') : '...',
     }));
   }, [messagesData]);
 
-
-  const currentUser: User | undefined = useMemo(() => {
+  const currentUser = useMemo(() => {
     if (!user || !users) return undefined;
     return users.find(u => u.id === user.uid);
   }, [user, users]);
 
-  if (isUserLoading || usersLoading || messagesLoading || !currentUser || !users || !messages) {
+  if (isUserLoading || usersLoading || messagesLoading || !currentUser) {
     return (
-        <div className="flex h-screen flex-col bg-background">
-          <header className="flex h-16 shrink-0 items-center justify-between border-b bg-card px-4 md:px-6">
-            <div className="flex items-center gap-2">
-              <Skeleton className="h-8 w-8" />
-              <div className="hidden items-center gap-2 md:flex">
-                <Skeleton className="h-6 w-32" />
-              </div>
-            </div>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Users className="h-5 w-5" />
-              <Skeleton className="h-4 w-20" />
-            </div>
-          </header>
-          <main className="flex-1 overflow-hidden p-4 md:p-6">
-             <div className="space-y-4">
-                <Skeleton className="h-20 w-3/4" />
-                <Skeleton className="h-20 w-3/4 ml-auto" />
-                <Skeleton className="h-20 w-3/4" />
-             </div>
-          </main>
-          <footer className="shrink-0 border-t bg-card p-2 md:p-4">
-            <Skeleton className="h-12 w-full rounded-2xl" />
-          </footer>
-        </div>
+      <div className="flex h-screen flex-col bg-background">
+        <header className="flex h-16 shrink-0 items-center justify-between border-b bg-card px-4 md:px-6">
+          <Skeleton className="h-8 w-8" />
+          <Skeleton className="h-6 w-32" />
+        </header>
+        <main className="flex-1 overflow-hidden p-4 md:p-6">
+          <Skeleton className="h-20 w-full" />
+          <Skeleton className="h-20 w-full" />
+        </main>
+        <footer className="shrink-0 border-t bg-card p-2 md:p-4">
+          <Skeleton className="h-12 w-full rounded-2xl" />
+        </footer>
+      </div>
     );
   }
 
@@ -93,12 +79,10 @@ export default function ChatPage() {
       <SidebarInset>
         <div className="flex h-screen flex-col bg-background">
           <header className="flex h-16 shrink-0 items-center justify-between border-b bg-card px-4 md:px-6">
+            <SidebarTrigger className="md:hidden" />
             <div className="flex items-center gap-2">
-              <SidebarTrigger className="md:hidden" />
-              <div className="flex items-center gap-2">
-                <Logo />
-                <h1 className="text-lg font-semibold font-headline">Групповой чат</h1>
-              </div>
+              <Logo />
+              <h1 className="text-lg font-semibold font-headline">Групповой чат</h1>
             </div>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Users className="h-5 w-5" />
@@ -106,11 +90,7 @@ export default function ChatPage() {
             </div>
           </header>
           <main className="flex-1 overflow-hidden">
-            <ChatMessages 
-              messages={messages || []} 
-              users={users} 
-              currentUser={currentUser} 
-            />
+            <ChatMessages messages={messages} users={users} currentUser={currentUser} />
           </main>
           <footer className="shrink-0 border-t bg-card p-2 md:p-4">
             <MessageInput />
@@ -118,5 +98,5 @@ export default function ChatPage() {
         </div>
       </SidebarInset>
     </SidebarProvider>
-  )
+  );
 }

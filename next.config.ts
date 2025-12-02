@@ -1,44 +1,24 @@
 import type { NextConfig } from 'next';
+import withPWA from 'next-pwa';
 
-const withPWA = require('next-pwa')({
-  dest: 'public',
+const nextConfig: NextConfig = withPWA({
+  dest: 'public', // куда будет экспорт
   register: true,
   skipWaiting: true,
-  disable: process.env.NODE_ENV === 'development', // В dev PWA отключена
-});
-
-const nextConfig: NextConfig = {
-  output: 'export', // ✔ Главная строка для бесплатного Firebase Hosting
+  disable: process.env.NODE_ENV === 'development', // отключаем PWA в dev
   reactStrictMode: true,
-
-  typescript: {
-    ignoreBuildErrors: true,
-  },
-
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-
+  typescript: { ignoreBuildErrors: true },
+  eslint: { ignoreDuringBuilds: true },
   images: {
-    unoptimized: true, // ✔ обязательно при static export
+    unoptimized: true,
     remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 'placehold.co',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'images.unsplash.com',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'picsum.photos',
-        pathname: '/**',
-      },
+      { protocol: 'https', hostname: 'placehold.co', pathname: '/**' },
+      { protocol: 'https', hostname: 'images.unsplash.com', pathname: '/**' },
+      { protocol: 'https', hostname: 'picsum.photos', pathname: '/**' },
     ],
   },
-};
+  output: 'export',  // главный параметр для static export
+  distDir: 'public', // экспортируем прямо в public
+});
 
-export default withPWA(nextConfig);
+export default nextConfig;
