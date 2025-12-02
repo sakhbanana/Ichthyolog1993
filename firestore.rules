@@ -1,34 +1,36 @@
+// Firestore rules for free plan (no Cloud Functions)
+// Admin users can delete anything
+// Regular users can delete only their own messages/files
+
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
-    function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
-    }
-
+    // Users list. Admin flag stored here.
     match /users/{userId} {
-      allow read;
-      allow create: if isOwner(userId) && request.resource.data.id == userId;
-      allow update: if isOwner(userId);
-      allow delete: if false; // Users should not be able to delete their own profiles
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == userId;
     }
 
-    match /group_chat/group/messages/{messageId} {
-      allow list, read: if isSignedIn();
-      allow create: if isSignedIn() && request.resource.data.authorId == request.auth.uid;
-      allow update, delete: if isSignedIn() && resource.data.authorId == request.auth.uid;
-    }
-    
-    match /media/{mediaId} {
-      allow get: if isSignedIn();
-      allow list: if isSignedIn();
-      allow create: if isSignedIn();
-      allow update: if false;
-      allow delete: if false;
+    // Chat messages
+    match /messages/{messageId} {
+      allow read: if request.auth != null;
+
+      // Create message — user must be logged in
+      allow create: if request.auth != null;
+
+      // Update / Delete
+      allow update, delete: if isAdmin() || isOwner();
+
+      function isOwner() {
+        return request.auth != null &&
+               request.auth.uid == resource.data.userId;
+      }
+
+      function isAdmin() {
+        return request.auth != null &&
+               get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+      }
     }
   }
 }
