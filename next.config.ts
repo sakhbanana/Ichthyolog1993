@@ -12,11 +12,11 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
 
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false, // Включена проверка TypeScript
   },
 
   eslint: {
-    ignoreDuringBuilds: true,
+    ignoreDuringBuilds: false, // Включена проверка ESLint
   },
 
   images: {
