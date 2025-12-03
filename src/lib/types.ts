@@ -1,11 +1,3 @@
-export interface User {
-  id: string;
-  name: string;
-  avatar: string;
-  online: boolean;
-  email: string;
-}
-
 export interface Message {
   id: string;
   authorId: string;

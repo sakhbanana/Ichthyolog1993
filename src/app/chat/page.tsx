@@ -3,8 +3,6 @@
 import type { AppUser } from '@/types/user';
 import {
   collection,
-  deleteDoc,
-  getDocs,
   orderBy,
   query,
   Timestamp,
@@ -50,6 +48,7 @@ export default function ChatPage() {
         ? rawUsers.map((u) => ({
             id: u.id,
             name: u.name ?? '',
+            email: u.email ?? '',
             avatar: u.avatar ?? '',
             online: u.online ?? false,
           }))
@@ -83,10 +82,7 @@ export default function ChatPage() {
         return {
             ...m,
             id: m.id,
-            timestamp: timestamp ? timestamp.toDate().toLocaleTimeString('ru-RU', {
-                hour: '2-digit',
-                minute: '2-digit',
-              }) : '..._error_...',
+            timestamp: timestamp ? timestamp.toDate() : new Date(),
         }
     });
   }, [messagesData]);

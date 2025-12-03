@@ -38,6 +38,7 @@ export function ChatMessages({ messages, users, currentUser }: ChatMessagesProps
             const author = getUserById(message.authorId);
             const isCurrentUser = message.authorId === currentUser.id;
             const showAvatar = index === 0 || messages[index - 1].authorId !== message.authorId;
+            const timestamp = message.timestamp as Date;
 
             return (
               <div
@@ -91,7 +92,10 @@ export function ChatMessages({ messages, users, currentUser }: ChatMessagesProps
                       </CardContent>
                     </Card>
                   )}
-                  <div className="text-xs text-muted-foreground">{message.timestamp.toString()}</div>
+                  <div className="text-xs text-muted-foreground">{timestamp.toLocaleTimeString('ru-RU', {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}</div>
                 </div>
               </div>
             );

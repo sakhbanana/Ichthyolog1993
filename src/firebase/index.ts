@@ -1,8 +1,6 @@
 // src/firebase/index.ts
 // Главная точка входа Firebase
 
-export { initializeFirebase } from './client';
-
 export {
   useUser,
   useAuth,
