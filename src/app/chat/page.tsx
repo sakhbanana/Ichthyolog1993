@@ -16,37 +16,33 @@ import { useRouter } from 'next/navigation';
 import { ChatSidebar } from '@/components/chat/chat-sidebar';
 import { ChatMessages } from '@/components/chat/chat-messages';
 import { MessageInput } from '@/components/chat/message-input';
-import {
-  useFirestore,
-  useUser,
-  useCollection,
-  useMemoFirebase,
-} from '@/firebase';
+
+import { useFirestore, useUser, useCollection, useMemoFirebase } from '@/firebase/hooks';
 
 import { sub } from 'date-fns';
 
 export default function ChatPage() {
   const router = useRouter();
 
-  // Firebase
   const firestore = useFirestore();
   const { user, isUserLoading } = useUser();
 
-  // Если пользователь не залогинен — редирект на логин
+  // Редирект, если нет пользователя
   useEffect(() => {
     if (!isUserLoading && !user) {
       router.push('/login');
     }
   }, [user, isUserLoading, router]);
 
-  // Загружаем всех пользователей (для списка участников)
+  // Загружаем список пользователей
   const usersQuery = useMemoFirebase(() => {
     if (!firestore) return null;
     return query(collection(firestore, 'users'));
   }, [firestore]);
+
   const users = useCollection(usersQuery)?.data || [];
 
-  // Запрос сообщений (только за последние 6 месяцев)
+  // Фильтруем сообщения за последние 6 месяцев
   const sixMonthsAgo = useMemo(() => sub(new Date(), { months: 6 }), []);
 
   const messagesQuery = useMemoFirebase(() => {
@@ -61,25 +57,22 @@ export default function ChatPage() {
 
   const messages = useCollection(messagesQuery)?.data || [];
 
-  // -----------------------------------------------------------------------------
-  // 🧹 АВТОМАТИЧЕСКАЯ ОЧИСТКА СТАРЫХ СООБЩЕНИЙ (вариант A)
-  // Запускается при заходе на страницу. Не чаще одного раза в сутки.
-  // -----------------------------------------------------------------------------
-
+  // ---------------------------------------------------------------------------
+  // АВТОМАТИЧЕСКАЯ ОЧИСТКА СТАРЫХ СООБЩЕНИЙ
+  // ---------------------------------------------------------------------------
   useEffect(() => {
     if (!firestore || !user) return;
-
     if (typeof window === 'undefined') return;
 
     const now = Date.now();
     const DAY_MS = 24 * 60 * 60 * 1000;
 
-    const lastCleanupRaw = window.localStorage.getItem('lastMessagesCleanup');
+    const lastCleanupRaw = localStorage.getItem('lastMessagesCleanup');
+
     if (lastCleanupRaw) {
       const lastCleanup = Number(lastCleanupRaw);
       if (!Number.isNaN(lastCleanup) && now - lastCleanup < DAY_MS) {
-        // Уже чистили менее 24 часов назад
-        return;
+        return; // уже чистили за последние сутки
       }
     }
 
@@ -102,23 +95,41 @@ export default function ChatPage() {
 
         await Promise.all(snapshot.docs.map(docSnap => deleteDoc(docSnap.ref)));
 
-        window.localStorage.setItem('lastMessagesCleanup', String(now));
+        localStorage.setItem('lastMessagesCleanup', String(now));
       } catch (err) {
         console.error('Ошибка очистки старых сообщений:', err);
       }
     };
 
-    void cleanupOldMessages();
+    cleanupOldMessages();
   }, [firestore, user]);
-
-  // -----------------------------------------------------------------------------
+  // ---------------------------------------------------------------------------
 
   if (isUserLoading || !user) {
     return <div className="p-4">Загрузка...</div>;
   }
 
+  // ---------------------------------------------------------------------------
+  // JSX — ВАЖНО: правильно закрыт, не разорван
+  // ---------------------------------------------------------------------------
+
   return (
     <div className="flex h-screen">
-      {/* Сайдбар со списком пользователей и настройками */}
+      {/* Сайдбар */}
       <div className="hidden h-full w-80 border-r bg-background md:block">
-        <ChatSidebar cu
+        <ChatSidebar currentUser={user} users={users} />
+      </div>
+
+      {/* Основной чат */}
+      <div className="flex flex-1 flex-col">
+        <div className="flex-1 overflow-y-auto p-4">
+          <ChatMessages messages={messages} currentUserId={user.uid} />
+        </div>
+
+        <div className="border-t p-3">
+          <MessageInput />
+        </div>
+      </div>
+    </div>
+  );
+}

@@ -1,27 +1,8 @@
-import { firebaseConfig } from './config';
-import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+// src/firebase/index.ts
+// Единая точка входа Firebase
 
-export function initializeFirebase() {
-  if (!getApps().length) {
-    let firebaseApp: FirebaseApp;
-    try {
-      // Пытаемся инициализировать через Hosting env (только на Firebase)
-      firebaseApp = initializeApp();
-    } catch (e) {
-      // Локально используем конфиг
-      firebaseApp = initializeApp(firebaseConfig);
-    }
-    return getSdks(firebaseApp);
-  }
-  return getSdks(getApp());
-}
+// Экспортируем инициализацию Firebase (клиентская)
+export { initializeFirebase } from './client';
 
-function getSdks(firebaseApp: FirebaseApp) {
-  return {
-    firebaseApp,
-    auth: getAuth(firebaseApp),
-    firestore: getFirestore(firebaseApp),
-  };
-}
+// Экспортируем все хуки для работы с Auth и Firestore
+export * from './hooks';
