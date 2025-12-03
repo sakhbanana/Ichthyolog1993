@@ -1,25 +1,30 @@
 'use client';
 
-import { useEffect, useMemo } from 'react';
+import type { AppUser } from '@/types/user';
 import {
   collection,
-  query,
-  orderBy,
-  where,
-  Timestamp,
-  getDocs,
   deleteDoc,
+  getDocs,
+  orderBy,
+  query,
+  Timestamp,
+  where,
 } from 'firebase/firestore';
+import { useEffect, useMemo } from 'react';
 
 import { useRouter } from 'next/navigation';
 
+import { sub } from 'date-fns';
+import {
+  useCollection,
+  useFirestore,
+  useMemoFirebase,
+  useUser,
+} from '@/firebase/provider';
+import type { Message } from '@/lib/types';
 import { ChatSidebar } from '@/components/chat/chat-sidebar';
 import { ChatMessages } from '@/components/chat/chat-messages';
 import { MessageInput } from '@/components/chat/message-input';
-
-import { useFirestore, useUser, useCollection, useMemoFirebase } from '@/firebase/hooks';
-
-import { sub } from 'date-fns';
 
 export default function ChatPage() {
   const router = useRouter();
@@ -27,22 +32,36 @@ export default function ChatPage() {
   const firestore = useFirestore();
   const { user, isUserLoading } = useUser();
 
-  // Редирект, если нет пользователя
   useEffect(() => {
     if (!isUserLoading && !user) {
       router.push('/login');
     }
   }, [user, isUserLoading, router]);
 
-  // Загружаем список пользователей
-  const usersQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return query(collection(firestore, 'users'));
-  }, [firestore]);
+  const usersQuery = useMemoFirebase(
+    () => (firestore ? query(collection(firestore, 'users')) : null),
+    [firestore]
+  );
+  const { data: rawUsers } = useCollection<Omit<AppUser, 'id'>>(usersQuery);
 
-  const users = useCollection(usersQuery)?.data || [];
+  const users: AppUser[] = useMemo(
+    () =>
+      rawUsers
+        ? rawUsers.map((u) => ({
+            id: u.id,
+            name: u.name ?? '',
+            avatar: u.avatar ?? '',
+            online: u.online ?? false,
+          }))
+        : [],
+    [rawUsers]
+  );
 
-  // Фильтруем сообщения за последние 6 месяцев
+  const currentUserProfile: AppUser | null = useMemo(
+    () => (user && users.length > 0 ? users.find((u) => u.id === user.uid) || null : null),
+    [user, users]
+  );
+    
   const sixMonthsAgo = useMemo(() => sub(new Date(), { months: 6 }), []);
 
   const messagesQuery = useMemoFirebase(() => {
@@ -51,79 +70,43 @@ export default function ChatPage() {
     return query(
       collection(firestore, 'group_chat/group/messages'),
       where('timestamp', '>=', Timestamp.fromDate(sixMonthsAgo)),
-      orderBy('timestamp', 'asc'),
+      orderBy('timestamp', 'asc')
     );
   }, [firestore, sixMonthsAgo]);
 
-  const messages = useCollection(messagesQuery)?.data || [];
+  const { data: messagesData } = useCollection<Omit<Message, 'id'>>(messagesQuery);
 
-  // ---------------------------------------------------------------------------
-  // АВТОМАТИЧЕСКАЯ ОЧИСТКА СТАРЫХ СООБЩЕНИЙ
-  // ---------------------------------------------------------------------------
-  useEffect(() => {
-    if (!firestore || !user) return;
-    if (typeof window === 'undefined') return;
+  const messages: Message[] = useMemo(() => {
+    if (!messagesData) return [];
+    return messagesData.map((m) => {
+        const timestamp = m.timestamp as unknown as Timestamp;
+        return {
+            ...m,
+            id: m.id,
+            timestamp: timestamp ? timestamp.toDate().toLocaleTimeString('ru-RU', {
+                hour: '2-digit',
+                minute: '2-digit',
+              }) : '..._error_...',
+        }
+    });
+  }, [messagesData]);
 
-    const now = Date.now();
-    const DAY_MS = 24 * 60 * 60 * 1000;
-
-    const lastCleanupRaw = localStorage.getItem('lastMessagesCleanup');
-
-    if (lastCleanupRaw) {
-      const lastCleanup = Number(lastCleanupRaw);
-      if (!Number.isNaN(lastCleanup) && now - lastCleanup < DAY_MS) {
-        return; // уже чистили за последние сутки
-      }
-    }
-
-    const cleanupOldMessages = async () => {
-      try {
-        const sixMonthsAgoDate = sub(new Date(), { months: 6 });
-
-        const messagesRef = collection(
-          firestore,
-          'group_chat/group/messages',
-        );
-
-        const cleanupQuery = query(
-          messagesRef,
-          where('timestamp', '<', Timestamp.fromDate(sixMonthsAgoDate)),
-          where('authorId', '==', user.uid),
-        );
-
-        const snapshot = await getDocs(cleanupQuery);
-
-        await Promise.all(snapshot.docs.map(docSnap => deleteDoc(docSnap.ref)));
-
-        localStorage.setItem('lastMessagesCleanup', String(now));
-      } catch (err) {
-        console.error('Ошибка очистки старых сообщений:', err);
-      }
-    };
-
-    cleanupOldMessages();
-  }, [firestore, user]);
-  // ---------------------------------------------------------------------------
 
   if (isUserLoading || !user) {
-    return <div className="p-4">Загрузка...</div>;
+    return <div className="p-4">Загрузка…</div>;
   }
-
-  // ---------------------------------------------------------------------------
-  // JSX — ВАЖНО: правильно закрыт, не разорван
-  // ---------------------------------------------------------------------------
 
   return (
     <div className="flex h-screen">
-      {/* Сайдбар */}
       <div className="hidden h-full w-80 border-r bg-background md:block">
-        <ChatSidebar currentUser={user} users={users} />
+        <ChatSidebar currentUser={currentUserProfile} users={users} />
       </div>
 
-      {/* Основной чат */}
       <div className="flex flex-1 flex-col">
         <div className="flex-1 overflow-y-auto p-4">
-          <ChatMessages messages={messages} currentUserId={user.uid} />
+          {currentUserProfile && (
+             <ChatMessages messages={messages} users={users} currentUser={currentUserProfile} />
+          )}
         </div>
 
         <div className="border-t p-3">

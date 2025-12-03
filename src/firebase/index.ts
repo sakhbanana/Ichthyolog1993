@@ -1,8 +1,21 @@
 // src/firebase/index.ts
-// Единая точка входа Firebase
+// Главная точка входа Firebase
 
-// Экспортируем инициализацию Firebase (клиентская)
 export { initializeFirebase } from './client';
 
-// Экспортируем все хуки для работы с Auth и Firestore
-export * from './hooks';
+export {
+  useUser,
+  useAuth,
+  useFirestore,
+  useMemoFirebase,
+} from './provider';
+
+export {
+    useCollection
+} from './firestore/use-collection';
+
+export {
+    addDocumentNonBlocking,
+    setDocumentNonBlocking,
+    updateDocumentNonBlocking,
+} from './non-blocking-updates';

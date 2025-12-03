@@ -1,6 +1,7 @@
 'use client';
 
-import type { User, Message } from '@/lib/types';
+import type { Message } from '@/lib/types';
+import type { AppUser } from '@/types/user';
 import { useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
@@ -11,8 +12,8 @@ import { PlayCircle } from 'lucide-react';
 
 interface ChatMessagesProps {
   messages: Message[];
-  users: User[];
-  currentUser: User;
+  users: AppUser[];
+  currentUser: AppUser;
 }
 
 export function ChatMessages({ messages, users, currentUser }: ChatMessagesProps) {
@@ -90,7 +91,7 @@ export function ChatMessages({ messages, users, currentUser }: ChatMessagesProps
                       </CardContent>
                     </Card>
                   )}
-                  <div className="text-xs text-muted-foreground">{message.timestamp}</div>
+                  <div className="text-xs text-muted-foreground">{message.timestamp.toString()}</div>
                 </div>
               </div>
             );
