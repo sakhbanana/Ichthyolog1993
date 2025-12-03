@@ -12,8 +12,8 @@ service cloud.firestore {
       allow write: if request.auth != null && request.auth.uid == userId;
     }
 
-    // Chat messages
-    match /messages/{messageId} {
+    // Chat messages - исправлен путь для соответствия коду
+    match /group_chat/group/messages/{messageId} {
       allow read: if request.auth != null;
 
       // Create message — user must be logged in
@@ -24,7 +24,7 @@ service cloud.firestore {
 
       function isOwner() {
         return request.auth != null &&
-               request.auth.uid == resource.data.userId;
+               request.auth.uid == resource.data.authorId;
       }
 
       function isAdmin() {
