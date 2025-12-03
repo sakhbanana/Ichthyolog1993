@@ -1,102 +1,124 @@
 'use client';
 
 import { useEffect, useMemo } from 'react';
+import {
+  collection,
+  query,
+  orderBy,
+  where,
+  Timestamp,
+  getDocs,
+  deleteDoc,
+} from 'firebase/firestore';
+
 import { useRouter } from 'next/navigation';
-import { collection, query, orderBy, where, Timestamp } from 'firebase/firestore';
-import { useUser, useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import type { User, Message } from '@/lib/types';
-import { SidebarProvider, Sidebar, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar";
-import { ChatSidebar } from "@/components/chat/chat-sidebar";
-import { ChatMessages } from "@/components/chat/chat-messages";
-import { MessageInput } from "@/components/chat/message-input";
-import { Users } from "lucide-react";
-import { Logo } from "@/components/logo";
-import { Skeleton } from '@/components/ui/skeleton';
-import { format, sub } from 'date-fns';
+
+import { ChatSidebar } from '@/components/chat/chat-sidebar';
+import { ChatMessages } from '@/components/chat/chat-messages';
+import { MessageInput } from '@/components/chat/message-input';
+import {
+  useFirestore,
+  useUser,
+  useCollection,
+  useMemoFirebase,
+} from '@/firebase';
+
+import { sub } from 'date-fns';
 
 export default function ChatPage() {
   const router = useRouter();
+
+  // Firebase
   const firestore = useFirestore();
   const { user, isUserLoading } = useUser();
 
+  // Если пользователь не залогинен — редирект на логин
   useEffect(() => {
     if (!isUserLoading && !user) {
       router.push('/login');
     }
   }, [user, isUserLoading, router]);
 
-  const usersQuery = useMemoFirebase(() => collection(firestore, 'users'), [firestore]);
-  const { data: users, isLoading: usersLoading } = useCollection<User>(usersQuery);
+  // Загружаем всех пользователей (для списка участников)
+  const usersQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return query(collection(firestore, 'users'));
+  }, [firestore]);
+  const users = useCollection(usersQuery)?.data || [];
 
+  // Запрос сообщений (только за последние 6 месяцев)
   const sixMonthsAgo = useMemo(() => sub(new Date(), { months: 6 }), []);
+
   const messagesQuery = useMemoFirebase(() => {
     if (!firestore) return null;
+
     return query(
       collection(firestore, 'group_chat/group/messages'),
       where('timestamp', '>=', Timestamp.fromDate(sixMonthsAgo)),
-      orderBy('timestamp', 'asc')
+      orderBy('timestamp', 'asc'),
     );
   }, [firestore, sixMonthsAgo]);
 
-  const { data: messagesData, isLoading: messagesLoading } = useCollection<Message>(messagesQuery);
+  const messages = useCollection(messagesQuery)?.data || [];
 
-  const messages = useMemo(() => {
-    if (!messagesData) return [];
-    return messagesData.map(msg => ({
-      ...msg,
-      timestamp: msg.timestamp ? format(msg.timestamp.toDate(), 'HH:mm') : '...',
-    }));
-  }, [messagesData]);
+  // -----------------------------------------------------------------------------
+  // 🧹 АВТОМАТИЧЕСКАЯ ОЧИСТКА СТАРЫХ СООБЩЕНИЙ (вариант A)
+  // Запускается при заходе на страницу. Не чаще одного раза в сутки.
+  // -----------------------------------------------------------------------------
 
-  const currentUser = useMemo(() => {
-    if (!user || !users) return undefined;
-    return users.find(u => u.id === user.uid);
-  }, [user, users]);
+  useEffect(() => {
+    if (!firestore || !user) return;
 
-  if (isUserLoading || usersLoading || messagesLoading || !currentUser) {
-    return (
-      <div className="flex h-screen flex-col bg-background">
-        <header className="flex h-16 shrink-0 items-center justify-between border-b bg-card px-4 md:px-6">
-          <Skeleton className="h-8 w-8" />
-          <Skeleton className="h-6 w-32" />
-        </header>
-        <main className="flex-1 overflow-hidden p-4 md:p-6">
-          <Skeleton className="h-20 w-full" />
-          <Skeleton className="h-20 w-full" />
-        </main>
-        <footer className="shrink-0 border-t bg-card p-2 md:p-4">
-          <Skeleton className="h-12 w-full rounded-2xl" />
-        </footer>
-      </div>
-    );
+    if (typeof window === 'undefined') return;
+
+    const now = Date.now();
+    const DAY_MS = 24 * 60 * 60 * 1000;
+
+    const lastCleanupRaw = window.localStorage.getItem('lastMessagesCleanup');
+    if (lastCleanupRaw) {
+      const lastCleanup = Number(lastCleanupRaw);
+      if (!Number.isNaN(lastCleanup) && now - lastCleanup < DAY_MS) {
+        // Уже чистили менее 24 часов назад
+        return;
+      }
+    }
+
+    const cleanupOldMessages = async () => {
+      try {
+        const sixMonthsAgoDate = sub(new Date(), { months: 6 });
+
+        const messagesRef = collection(
+          firestore,
+          'group_chat/group/messages',
+        );
+
+        const cleanupQuery = query(
+          messagesRef,
+          where('timestamp', '<', Timestamp.fromDate(sixMonthsAgoDate)),
+          where('authorId', '==', user.uid),
+        );
+
+        const snapshot = await getDocs(cleanupQuery);
+
+        await Promise.all(snapshot.docs.map(docSnap => deleteDoc(docSnap.ref)));
+
+        window.localStorage.setItem('lastMessagesCleanup', String(now));
+      } catch (err) {
+        console.error('Ошибка очистки старых сообщений:', err);
+      }
+    };
+
+    void cleanupOldMessages();
+  }, [firestore, user]);
+
+  // -----------------------------------------------------------------------------
+
+  if (isUserLoading || !user) {
+    return <div className="p-4">Загрузка...</div>;
   }
 
   return (
-    <SidebarProvider>
-      <Sidebar>
-        <ChatSidebar users={users} currentUser={currentUser} />
-      </Sidebar>
-      <SidebarInset>
-        <div className="flex h-screen flex-col bg-background">
-          <header className="flex h-16 shrink-0 items-center justify-between border-b bg-card px-4 md:px-6">
-            <SidebarTrigger className="md:hidden" />
-            <div className="flex items-center gap-2">
-              <Logo />
-              <h1 className="text-lg font-semibold font-headline">Групповой чат</h1>
-            </div>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Users className="h-5 w-5" />
-              <span>{users.length} Участников</span>
-            </div>
-          </header>
-          <main className="flex-1 overflow-hidden">
-            <ChatMessages messages={messages} users={users} currentUser={currentUser} />
-          </main>
-          <footer className="shrink-0 border-t bg-card p-2 md:p-4">
-            <MessageInput />
-          </footer>
-        </div>
-      </SidebarInset>
-    </SidebarProvider>
-  );
-}
+    <div className="flex h-screen">
+      {/* Сайдбар со списком пользователей и настройками */}
+      <div className="hidden h-full w-80 border-r bg-background md:block">
+        <ChatSidebar cu

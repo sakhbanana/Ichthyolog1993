@@ -9,9 +9,29 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
 
+    outputs:
+      web_app_url: ${{ steps.set-urls.outputs.web_app_url }}
+      firebase_app_url: ${{ steps.set-urls.outputs.firebase_app_url }}
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Next.js app
+        run: npm run build
+
+      - name: Export static site
+        run: npx next export
+        # Next.js положит статику в ./out
+        # а firebase.json уже настроен на "public": "out"
 
       - name: Decode Firebase Service Account
         run: |
@@ -25,3 +45,16 @@ jobs:
         run: |
           export GOOGLE_APPLICATION_CREDENTIALS="$HOME/firebase-key.json"
           firebase deploy --only hosting --project studio-151048688-101d3
+
+      - name: Set hosting URLs as outputs
+        id: set-urls
+        run: |
+          echo "web_app_url=https://studio-151048688-101d3.web.app" >> $GITHUB_OUTPUT
+          echo "firebase_app_url=https://studio-151048688-101d3.firebaseapp.com" >> $GITHUB_OUTPUT
+
+      - name: Deployment summary
+        run: |
+          echo "✅ Приложение задеплоено." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Основной URL: https://studio-151048688-101d3.web.app" >> $GITHUB_STEP_SUMMARY
+          echo "Альтернативный URL: https://studio-151048688-101d3.firebaseapp.com" >> $GITHUB_STEP_SUMMARY
