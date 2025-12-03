@@ -10,6 +10,7 @@ const withPWA = require("next-pwa")({
 
 const nextConfig = {
   reactStrictMode: true,
+  output: process.env.NODE_ENV === "production" ? "export" : undefined,
   images: {
     unoptimized: true,
     remotePatterns: [
