@@ -15,7 +15,7 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 import Image from 'next/image';
 import { useAuth, useFirestore, updateDocumentNonBlocking } from '@/firebase';
 import { doc, deleteDoc } from 'firebase/firestore';
-import { deleteUser } from 'firebase/auth';
+import { deleteUser, signOut } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 import {
   AlertDialog,
@@ -86,6 +86,20 @@ export function ChatSidebar({ users, currentUser }: ChatSidebarProps) {
         variant: 'destructive',
         title: "Ошибка удаления",
         description,
+      });
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      router.replace('/login');
+    } catch (error) {
+      console.error('Error during sign out:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Ошибка выхода',
+        description: 'Не удалось выйти из аккаунта. Попробуйте еще раз.',
       });
     }
   };
@@ -187,10 +201,14 @@ export function ChatSidebar({ users, currentUser }: ChatSidebarProps) {
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
-          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" asChild>
-            <a href="/login">
-              <LogOut className="h-4 w-4" />
-            </a>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-muted-foreground"
+            onClick={handleLogout}
+            aria-label="Выйти"
+          >
+            <LogOut className="h-4 w-4" />
           </Button>
         </div>
       </div>
