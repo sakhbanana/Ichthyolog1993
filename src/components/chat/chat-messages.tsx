@@ -31,7 +31,7 @@ export function ChatMessages({ messages, users, currentUser }: ChatMessagesProps
   const getUserById = (id: string) => users.find(u => u.id === id);
 
   return (
-    <ScrollArea className="h-full" viewportRef={scrollAreaRef}>
+    <ScrollArea className="h-full" ref={scrollAreaRef}>
       <div className="p-4 md:p-6">
         <div className="flex flex-col gap-4">
           {messages.map((message, index) => {
@@ -92,7 +92,7 @@ export function ChatMessages({ messages, users, currentUser }: ChatMessagesProps
                       </CardContent>
                     </Card>
                   )}
-                  <div className="text-xs text-muted-foreground">{timestamp.toLocaleTimeString('ru-RU', {
+                  <div className="text-xs text-muted-foreground">{timestamp.toLocaleTimeString(undefined, {
                       hour: '2-digit',
                       minute: '2-digit',
                     })}</div>

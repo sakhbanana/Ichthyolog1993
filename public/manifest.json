@@ -1,7 +1,7 @@
 {
-  "name": "Ихтиологи 1993",
-  "short_name": "Ихтиологи 1993",
-  "description": "Мессенджер для вашей группы.",
+  "name": "Ichthyologists 1993",
+  "short_name": "Ichthyologists 1993",
+  "description": "A messenger for your group.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#4527A0",

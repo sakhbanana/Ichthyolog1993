@@ -14,11 +14,11 @@ import { useRouter } from 'next/navigation';
 
 import { sub } from 'date-fns';
 import {
-  useCollection,
   useFirestore,
   useMemoFirebase,
   useUser,
 } from '@/firebase/provider';
+import { useCollection } from '@/firebase/firestore/use-collection';
 import type { Message } from '@/lib/types';
 import { ChatSidebar } from '@/components/chat/chat-sidebar';
 import { ChatMessages } from '@/components/chat/chat-messages';
@@ -89,7 +89,7 @@ export default function ChatPage() {
 
 
   if (isUserLoading || !user) {
-    return <div className="p-4">Загрузка…</div>;
+    return <div className="p-4">Loading…</div>;
   }
 
   return (
