@@ -10,7 +10,6 @@ const withPWA = require("next-pwa")({
 
 const nextConfig = {
   reactStrictMode: true,
-  output: "export",  // заменяет next export
   images: {
     unoptimized: true,
     remotePatterns: [
