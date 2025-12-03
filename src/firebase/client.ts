@@ -6,14 +6,12 @@ import { getFirestore } from 'firebase/firestore';
 export function initializeFirebase() {
   let app;
 
+  if (typeof window === 'undefined') {
+    return { app: null, auth: null, firestore: null };
+  }
+
   if (!getApps().length) {
-    try {
-      // Firebase Hosting автоматически подставляет конфиг
-      app = initializeApp();
-    } catch {
-      // локальный режим
-      app = initializeApp(firebaseConfig);
-    }
+    app = initializeApp(firebaseConfig);
   } else {
     app = getApp();
   }
