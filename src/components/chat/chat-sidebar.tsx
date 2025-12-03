@@ -8,6 +8,7 @@ import type { AppUser } from "@/types/user";
 import { useAuth, useFirestore, updateDocumentNonBlocking } from "@/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 
 import { doc, deleteDoc } from "firebase/firestore";
 import { useRouter } from "next/navigation";
