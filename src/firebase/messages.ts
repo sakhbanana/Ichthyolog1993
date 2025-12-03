@@ -6,10 +6,11 @@ import {
     deleteDoc,
     doc,
     orderBy,
+    Firestore,
+    Auth,
   } from "firebase/firestore";
-  import { db, auth } from "./index";
   
-  export async function loadRecentMessages() {
+  export async function loadRecentMessages(db: Firestore) {
     const sixMonthsAgo = new Date();
     sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
   
@@ -29,7 +30,7 @@ import {
     }));
   }
   
-  export async function deleteMyOldMessages() {
+  export async function deleteMyOldMessages(db: Firestore, auth: Auth) {
     const user = auth.currentUser;
     if (!user) return;
   

@@ -1,3 +1,4 @@
+/** @type {import('next').NextConfig} */
 const withPWA = require('next-pwa')({
   dest: 'public',
   register: true,
@@ -7,15 +8,7 @@ const withPWA = require('next-pwa')({
 
 const nextConfig = {
   reactStrictMode: true,
-
-  typescript: {
-    ignoreBuildErrors: false,
-  },
-
-  eslint: {
-    ignoreDuringBuilds: false,
-  },
-
+  output: 'export',
   images: {
     unoptimized: true,
     remotePatterns: [
@@ -24,9 +17,6 @@ const nextConfig = {
       { protocol: 'https', hostname: 'picsum.photos', pathname: '/**' },
     ],
   },
-
-  output: 'export',
-  distDir: 'public',
 };
 
 module.exports = withPWA(nextConfig);
