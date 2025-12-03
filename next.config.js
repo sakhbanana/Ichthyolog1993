@@ -18,6 +18,11 @@ const nextConfig = {
       { protocol: "https", hostname: "picsum.photos", pathname: "/**" },
     ],
   },
+  experimental: {
+    serverActions: {
+      allowedOrigins: ["*"],
+    },
+  },
 };
 
 module.exports = withPWA(nextConfig);
