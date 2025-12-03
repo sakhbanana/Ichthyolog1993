@@ -10,7 +10,7 @@ const withPWA = require("next-pwa")({
 
 const nextConfig = {
   reactStrictMode: true,
-  output: process.env.NODE_ENV === "production" ? "export" : undefined,
+  output: "export",
   images: {
     unoptimized: true,
     remotePatterns: [
@@ -18,11 +18,6 @@ const nextConfig = {
       { protocol: "https", hostname: "images.unsplash.com", pathname: "/**" },
       { protocol: "https", hostname: "picsum.photos", pathname: "/**" },
     ],
-  },
-  experimental: {
-    serverActions: {
-      allowedOrigins: ["*"],
-    },
   },
 };
 

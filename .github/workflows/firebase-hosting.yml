@@ -27,11 +27,8 @@ jobs:
 
       - name: Build Next.js app
         run: npm run build
-
-      - name: Export static site
-        run: npx next export
-        # Next.js положит статику в ./out
-        # а firebase.json уже настроен на "public": "out"
+        # Next.js с output: "export" автоматически создаёт статику в ./out
+        # firebase.json уже настроен на "public": "out"
 
       - name: Decode Firebase Service Account
         run: |
