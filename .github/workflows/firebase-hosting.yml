@@ -21,7 +21,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build Next.js (static export via output: 'export')
+      - name: Build Next.js (static export via output:'export')
         run: npm run build
 
       - name: Deploy to Firebase Hosting
@@ -29,5 +29,5 @@ jobs:
         with:
           repoToken: "${{ secrets.GITHUB_TOKEN }}"
           firebaseServiceAccount: "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}"
-          projectId: "ТВОЙ_PROJECT_ID_ИЗ_FIREBASE"  # подставь свой
+          projectId: "studio-151048688-101d3"  # подставь свой
           channelId: live
