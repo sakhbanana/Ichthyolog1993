@@ -94,8 +94,7 @@ export function ChatSidebar({ currentUser, users }: ChatSidebarProps) {
 
       await reauthenticateWithCredential(auth.currentUser, credential);
 
-      // Firestore
-      await deleteDoc(doc(firestore, "users", userId));
+      await reauthenticateWithCredential(auth.currentUser, credential);
 
       // Auth
       await deleteUser(auth.currentUser);
