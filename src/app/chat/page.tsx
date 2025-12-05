@@ -8,7 +8,7 @@ import {
   Timestamp,
   where,
 } from 'firebase/firestore';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { useRouter } from 'next/navigation';
 
@@ -23,6 +23,9 @@ import type { Message } from '@/lib/types';
 import { ChatSidebar } from '@/components/chat/chat-sidebar';
 import { ChatMessages } from '@/components/chat/chat-messages';
 import { MessageInput } from '@/components/chat/message-input';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Button } from '@/components/ui/button';
+import { Users } from 'lucide-react';
 
 export default function ChatPage() {
   const router = useRouter();
@@ -60,7 +63,7 @@ export default function ChatPage() {
     () => (user && users.length > 0 ? users.find((u) => u.id === user.uid) || null : null),
     [user, users]
   );
-    
+
   const sixMonthsAgo = useMemo(() => sub(new Date(), { months: 6 }), []);
 
   const messagesQuery = useMemoFirebase(() => {
@@ -78,15 +81,16 @@ export default function ChatPage() {
   const messages: Message[] = useMemo(() => {
     if (!messagesData) return [];
     return messagesData.map((m) => {
-        const timestamp = m.timestamp as unknown as Timestamp;
-        return {
-            ...m,
-            id: m.id,
-            timestamp: timestamp ? timestamp.toDate() : new Date(),
-        }
+      const timestamp = m.timestamp as unknown as Timestamp;
+      return {
+        ...m,
+        id: m.id,
+        timestamp: timestamp ? timestamp.toDate() : new Date(),
+      };
     });
   }, [messagesData]);
 
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   if (isUserLoading || !user) {
     return <div className="p-4">Loading…</div>;
@@ -99,9 +103,23 @@ export default function ChatPage() {
       </div>
 
       <div className="flex flex-1 flex-col">
+        <div className="flex items-center justify-between border-b p-3 md:hidden">
+          <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
+            <SheetTrigger asChild>
+              <Button variant="outline" size="sm" className="gap-2">
+                <Users className="h-4 w-4" />
+                Участники
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-80 p-0">
+              <ChatSidebar currentUser={currentUserProfile} users={users} />
+            </SheetContent>
+          </Sheet>
+        </div>
+
         <div className="flex-1 overflow-y-auto p-4">
           {currentUserProfile && (
-             <ChatMessages messages={messages} users={users} currentUser={currentUserProfile} />
+            <ChatMessages messages={messages} users={users} currentUser={currentUserProfile} />
           )}
         </div>
 

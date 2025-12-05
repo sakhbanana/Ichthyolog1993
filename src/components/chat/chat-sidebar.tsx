@@ -10,6 +10,14 @@ import { useToast } from "@/hooks/use-toast";
 import { buttonVariants } from "@/components/ui/button";
 import { Button } from "@/components/ui/button";
 
+import {
+  EmailAuthProvider,
+  GoogleAuthProvider,
+  deleteUser,
+  reauthenticateWithCredential,
+  reauthenticateWithPopup,
+  signOut,
+} from "firebase/auth";
 import { doc, deleteDoc } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 
@@ -31,7 +39,7 @@ import {
   PopoverContent
 } from "@/components/ui/popover";
 
-import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { PlaceHolderImages } from "@/lib/placeholder-images";
 
 interface ChatSidebarProps {
   currentUser: AppUser | null;
@@ -63,18 +71,52 @@ export function ChatSidebar({ currentUser, users }: ChatSidebarProps) {
     });
   };
 
-  // Удаление аккаунта
-  const handleDeleteAccount = async () => {
+  const reauthenticateUser = async () => {
     if (!auth.currentUser) return;
 
+    const providerId = auth.currentUser.providerData[0]?.providerId;
+
+    if (providerId === "password") {
+      const password = window.prompt("Введите пароль для подтверждения удаления аккаунта");
+      if (!password || !auth.currentUser.email) {
+        throw new Error("Пароль не указан");
+      }
+
+      const credential = EmailAuthProvider.credential(auth.currentUser.email, password);
+      await reauthenticateWithCredential(auth.currentUser, credential);
+      return;
+    }
+
+    if (providerId === "google.com") {
+      const provider = new GoogleAuthProvider();
+      await reauthenticateWithPopup(auth, provider);
+      return;
+    }
+
+    await auth.currentUser.reload();
+  };
+
+  // Удаление аккаунта
+  const handleDeleteAccount = async () => {
+    if (!auth.currentUser || !firestore) {
+      toast({
+        variant: "destructive",
+        title: "Ошибка при удалении",
+        description: "Не удалось получить данные пользователя.",
+      });
+      return;
+    }
+
     try {
+      await reauthenticateUser();
+
       const userId = auth.currentUser.uid;
 
-      // Firestore
       await deleteDoc(doc(firestore, "users", userId));
 
-      // Auth
-      await auth.currentUser.delete();
+      await deleteUser(auth.currentUser);
+
+      await signOut(auth);
 
       toast({
         title: "Аккаунт удалён",
@@ -160,7 +202,10 @@ export function ChatSidebar({ currentUser, users }: ChatSidebarProps) {
           {/* Удалить аккаунт */}
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="link" className="mt-4 flex items-center gap-2 p-0 text-red-600 hover:text-red-700">
+              <Button
+                variant="link"
+                className="mt-4 flex items-center gap-2 p-0 text-red-600 hover:text-red-700"
+              >
                 <Trash2 size={18} />
                 Удалить аккаунт
               </Button>
@@ -175,7 +220,12 @@ export function ChatSidebar({ currentUser, users }: ChatSidebarProps) {
 
               <AlertDialogFooter>
                 <AlertDialogCancel>Отмена</AlertDialogCancel>
-                <AlertDialogAction onClick={handleDeleteAccount} className={buttonVariants({ variant: "destructive" })}>Удалить</AlertDialogAction>
+                <AlertDialogAction
+                  onClick={handleDeleteAccount}
+                  className={buttonVariants({ variant: "destructive" })}
+                >
+                  Удалить
+                </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
