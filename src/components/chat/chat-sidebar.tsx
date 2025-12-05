@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { buttonVariants } from "@/components/ui/button";
 import { Button } from "@/components/ui/button";
 
+import { signOut } from "firebase/auth";
 import { doc, deleteDoc } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 
@@ -31,7 +32,7 @@ import {
   PopoverContent
 } from "@/components/ui/popover";
 
-import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { PlaceHolderImages } from "@/lib/placeholder-images";
 
 interface ChatSidebarProps {
   currentUser: AppUser | null;
@@ -75,6 +76,8 @@ export function ChatSidebar({ currentUser, users }: ChatSidebarProps) {
 
       // Auth
       await auth.currentUser.delete();
+
+      await signOut(auth);
 
       toast({
         title: "Аккаунт удалён",
@@ -160,7 +163,10 @@ export function ChatSidebar({ currentUser, users }: ChatSidebarProps) {
           {/* Удалить аккаунт */}
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="link" className="mt-4 flex items-center gap-2 p-0 text-red-600 hover:text-red-700">
+              <Button
+                variant="link"
+                className="mt-4 flex items-center gap-2 p-0 text-red-600 hover:text-red-700"
+              >
                 <Trash2 size={18} />
                 Удалить аккаунт
               </Button>
@@ -175,7 +181,12 @@ export function ChatSidebar({ currentUser, users }: ChatSidebarProps) {
 
               <AlertDialogFooter>
                 <AlertDialogCancel>Отмена</AlertDialogCancel>
-                <AlertDialogAction onClick={handleDeleteAccount} className={buttonVariants({ variant: "destructive" })}>Удалить</AlertDialogAction>
+                <AlertDialogAction
+                  onClick={handleDeleteAccount}
+                  className={buttonVariants({ variant: "destructive" })}
+                >
+                  Удалить
+                </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
