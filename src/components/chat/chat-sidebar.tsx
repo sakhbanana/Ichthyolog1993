@@ -94,15 +94,10 @@ export function ChatSidebar({ currentUser, users }: ChatSidebarProps) {
 
       await reauthenticateWithCredential(auth.currentUser, credential);
 
-      // Auth: удалить пользователя из Firebase Auth
-      await deleteUser(auth.currentUser);
+      await reauthenticateWithCredential(auth.currentUser, credential);
 
-      // Firestore: удалить профиль пользователя, если он ещё существует
-      try {
-        await deleteDoc(doc(firestore, "users", userId));
-      } catch (firestoreError) {
-        console.error("Не удалось удалить профиль из Firestore", firestoreError);
-      }
+      // Auth
+      await deleteUser(auth.currentUser);
 
       toast({
         title: "Аккаунт удалён",
@@ -112,15 +107,10 @@ export function ChatSidebar({ currentUser, users }: ChatSidebarProps) {
       setPassword("");
       router.push("/signup");
     } catch (error: any) {
-      console.error("Ошибка при удалении аккаунта", error);
       let description = "Попробуйте позже.";
 
       if (error.code === "auth/invalid-credential" || error.code === "auth/requires-recent-login") {
         description = "Пароль неверный или устарела сессия. Пожалуйста, войдите заново и повторите попытку.";
-      } else if (error.code === "auth/user-mismatch" || error.code === "auth/user-not-found") {
-        description = "Сессия недействительна. Выйдите и войдите снова, затем повторите удаление.";
-      } else if (error.code === "auth/too-many-requests") {
-        description = "Слишком много попыток. Подождите немного и попробуйте снова.";
       }
 
       toast({
