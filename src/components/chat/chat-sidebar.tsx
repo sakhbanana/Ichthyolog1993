@@ -13,14 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 import { doc, deleteDoc } from "firebase/firestore";
-import {
-  deleteUser,
-  EmailAuthProvider,
-  GithubAuthProvider,
-  GoogleAuthProvider,
-  reauthenticateWithCredential,
-  reauthenticateWithPopup,
-} from "firebase/auth";
+import { deleteUser, EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
 import { useRouter } from "next/navigation";
 
 import {
@@ -56,24 +49,6 @@ export function ChatSidebar({ currentUser, users }: ChatSidebarProps) {
   const [password, setPassword] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const currentAuthUser = auth.currentUser;
-  const usesPasswordProvider = currentAuthUser?.providerData.some(
-    (provider) => provider.providerId === "password"
-  );
-
-  const buildAuthProvider = () => {
-    const firstProviderId = currentAuthUser?.providerData[0]?.providerId;
-
-    switch (firstProviderId) {
-      case "google.com":
-        return new GoogleAuthProvider();
-      case "github.com":
-        return new GithubAuthProvider();
-      default:
-        return null;
-    }
-  };
-
   const userAvatars = PlaceHolderImages.filter(img =>
     img.id.startsWith("user")
   );
@@ -96,7 +71,7 @@ export function ChatSidebar({ currentUser, users }: ChatSidebarProps) {
   // Удаление аккаунта
   const handleDeleteAccount = async () => {
     if (!auth.currentUser) return;
-    if (usesPasswordProvider && !password) {
+    if (!password) {
       toast({
         variant: "destructive",
         title: "Введите пароль",
@@ -111,35 +86,18 @@ export function ChatSidebar({ currentUser, users }: ChatSidebarProps) {
       const userId = auth.currentUser.uid;
       const email = auth.currentUser.email;
 
-      if (usesPasswordProvider) {
-        if (!email) {
-          throw new Error("Email не найден у текущего пользователя");
-        }
-
-        const credential = EmailAuthProvider.credential(email, password);
-
-        await reauthenticateWithCredential(auth.currentUser, credential);
-      } else {
-        const provider = buildAuthProvider();
-
-        if (!provider) {
-          throw new Error(
-            "Не удалось определить провайдера авторизации. Выйдите и войдите снова."
-          );
-        }
-
-        await reauthenticateWithPopup(auth.currentUser, provider);
+      if (!email) {
+        throw new Error("Email не найден у текущего пользователя");
       }
 
-      // Auth: удалить пользователя из Firebase Auth
+      const credential = EmailAuthProvider.credential(email, password);
+
+      await reauthenticateWithCredential(auth.currentUser, credential);
+
+      await reauthenticateWithCredential(auth.currentUser, credential);
+
+      // Auth
       await deleteUser(auth.currentUser);
-
-      // Firestore: удалить профиль пользователя, если он ещё существует
-      try {
-        await deleteDoc(doc(firestore, "users", userId));
-      } catch (firestoreError) {
-        console.error("Не удалось удалить профиль из Firestore", firestoreError);
-      }
 
       toast({
         title: "Аккаунт удалён",
@@ -149,19 +107,10 @@ export function ChatSidebar({ currentUser, users }: ChatSidebarProps) {
       setPassword("");
       router.push("/signup");
     } catch (error: any) {
-      console.error("Ошибка при удалении аккаунта", error);
       let description = "Попробуйте позже.";
 
       if (error.code === "auth/invalid-credential" || error.code === "auth/requires-recent-login") {
-        description = usesPasswordProvider
-          ? "Пароль неверный или устарела сессия. Пожалуйста, войдите заново и повторите попытку."
-          : "Сессия устарела. Войдите заново через ваш способ входа и повторите удаление.";
-      } else if (error.code === "auth/user-mismatch" || error.code === "auth/user-not-found") {
-        description = "Сессия недействительна. Выйдите и войдите снова, затем повторите удаление.";
-      } else if (error.code === "auth/too-many-requests") {
-        description = "Слишком много попыток. Подождите немного и попробуйте снова.";
-      } else if (error.message?.includes("провайдера авторизации")) {
-        description = error.message;
+        description = "Пароль неверный или устарела сессия. Пожалуйста, войдите заново и повторите попытку.";
       }
 
       toast({
@@ -257,23 +206,15 @@ export function ChatSidebar({ currentUser, users }: ChatSidebarProps) {
               </AlertDialogHeader>
 
               <div className="space-y-2">
-                {usesPasswordProvider ? (
-                  <>
-                    <p className="text-sm text-muted-foreground">
-                      Для подтверждения удаления введите пароль от аккаунта.
-                    </p>
-                    <Input
-                      type="password"
-                      placeholder="Пароль"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                    />
-                  </>
-                ) : (
-                  <p className="text-sm text-muted-foreground">
-                    Мы запросим повторный вход через ваш способ авторизации, чтобы подтвердить удаление.
-                  </p>
-                )}
+                <p className="text-sm text-muted-foreground">
+                  Для подтверждения удаления введите пароль от аккаунта.
+                </p>
+                <Input
+                  type="password"
+                  placeholder="Пароль"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
               </div>
 
               <AlertDialogFooter>
