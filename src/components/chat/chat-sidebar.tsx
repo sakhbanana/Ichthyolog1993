@@ -1,7 +1,8 @@
-'use client';
+"use client";
 
 import Image from "next/image";
 import { Trash2 } from "lucide-react";
+import { useState } from "react";
 
 import type { AppUser } from "@/types/user";
 
@@ -9,8 +10,10 @@ import { useAuth, useFirestore, updateDocumentNonBlocking } from "@/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { buttonVariants } from "@/components/ui/button";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 import { doc, deleteDoc } from "firebase/firestore";
+import { deleteUser, EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
 import { useRouter } from "next/navigation";
 
 import {
@@ -43,6 +46,8 @@ export function ChatSidebar({ currentUser, users }: ChatSidebarProps) {
   const firestore = useFirestore();
   const router = useRouter();
   const { toast } = useToast();
+  const [password, setPassword] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const userAvatars = PlaceHolderImages.filter(img =>
     img.id.startsWith("user")
@@ -66,28 +71,65 @@ export function ChatSidebar({ currentUser, users }: ChatSidebarProps) {
   // Удаление аккаунта
   const handleDeleteAccount = async () => {
     if (!auth.currentUser) return;
+    if (!password) {
+      toast({
+        variant: "destructive",
+        title: "Введите пароль",
+        description: "Для удаления аккаунта подтвердите действие паролем.",
+      });
+      return;
+    }
+
+    setIsDeleting(true);
 
     try {
       const userId = auth.currentUser.uid;
+      const email = auth.currentUser.email;
 
-      // Firestore
-      await deleteDoc(doc(firestore, "users", userId));
+      if (!email) {
+        throw new Error("Email не найден у текущего пользователя");
+      }
 
-      // Auth
-      await auth.currentUser.delete();
+      const credential = EmailAuthProvider.credential(email, password);
+
+      await reauthenticateWithCredential(auth.currentUser, credential);
+
+      // Auth: удалить пользователя из Firebase Auth
+      await deleteUser(auth.currentUser);
+
+      // Firestore: удалить профиль пользователя, если он ещё существует
+      try {
+        await deleteDoc(doc(firestore, "users", userId));
+      } catch (firestoreError) {
+        console.error("Не удалось удалить профиль из Firestore", firestoreError);
+      }
 
       toast({
         title: "Аккаунт удалён",
         description: "Вы можете зарегистрироваться снова.",
       });
 
-      router.push("/login");
-    } catch (error) {
+      setPassword("");
+      router.push("/signup");
+    } catch (error: any) {
+      console.error("Ошибка при удалении аккаунта", error);
+      let description = "Попробуйте позже.";
+
+      if (error.code === "auth/invalid-credential" || error.code === "auth/requires-recent-login") {
+        description = "Пароль неверный или устарела сессия. Пожалуйста, войдите заново и повторите попытку.";
+      } else if (error.code === "auth/user-mismatch" || error.code === "auth/user-not-found") {
+        description = "Сессия недействительна. Выйдите и войдите снова, затем повторите удаление.";
+      } else if (error.code === "auth/too-many-requests") {
+        description = "Слишком много попыток. Подождите немного и попробуйте снова.";
+      }
+
       toast({
         variant: "destructive",
         title: "Ошибка при удалении",
-        description: "Попробуйте позже.",
+        description,
       });
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -173,9 +215,27 @@ export function ChatSidebar({ currentUser, users }: ChatSidebarProps) {
                 </AlertDialogDescription>
               </AlertDialogHeader>
 
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">
+                  Для подтверждения удаления введите пароль от аккаунта.
+                </p>
+                <Input
+                  type="password"
+                  placeholder="Пароль"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+              </div>
+
               <AlertDialogFooter>
                 <AlertDialogCancel>Отмена</AlertDialogCancel>
-                <AlertDialogAction onClick={handleDeleteAccount} className={buttonVariants({ variant: "destructive" })}>Удалить</AlertDialogAction>
+                <AlertDialogAction
+                  onClick={handleDeleteAccount}
+                  className={buttonVariants({ variant: "destructive" })}
+                  disabled={isDeleting}
+                >
+                  {isDeleting ? "Удаление..." : "Удалить"}
+                </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
