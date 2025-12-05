@@ -10,14 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { buttonVariants } from "@/components/ui/button";
 import { Button } from "@/components/ui/button";
 
-import {
-  EmailAuthProvider,
-  GoogleAuthProvider,
-  deleteUser,
-  reauthenticateWithCredential,
-  reauthenticateWithPopup,
-  signOut,
-} from "firebase/auth";
+import { signOut } from "firebase/auth";
 import { doc, deleteDoc } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 
@@ -115,6 +108,8 @@ export function ChatSidebar({ currentUser, users }: ChatSidebarProps) {
       await deleteDoc(doc(firestore, "users", userId));
 
       await deleteUser(auth.currentUser);
+
+      await signOut(auth);
 
       await signOut(auth);
 
