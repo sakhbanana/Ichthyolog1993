@@ -61,12 +61,19 @@ export function MessageInput() {
    * Обработка выбора файла и загрузка в Firebase Storage
    */
   const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
+    console.log('[MessageInput] handleFileChange called');
     const file = e.target.files?.[0];
     // очищаем value, чтобы можно было выбрать тот же файл повторно
     e.target.value = '';
 
-    if (!file) return;
+    if (!file) {
+      console.log('[MessageInput] No file selected');
+      return;
+    }
+    console.log('[MessageInput] File selected:', file.name, file.type, file.size);
+    
     if (!user || !firestore || !messagesColRef) {
+      console.error('[MessageInput] Missing dependencies: user=', !!user, 'firestore=', !!firestore, 'messagesColRef=', !!messagesColRef);
       toast({
         variant: 'destructive',
         title: 'Ошибка',
@@ -78,7 +85,10 @@ export function MessageInput() {
     const isImage = file.type.startsWith('image/');
     const isVideo = file.type.startsWith('video/');
 
+    console.log('[MessageInput] File type check: isImage=', isImage, 'isVideo=', isVideo);
+
     if (!isImage && !isVideo) {
+      console.error('[MessageInput] Unsupported file type:', file.type);
       toast({
         variant: 'destructive',
         title: 'Неподдерживаемый формат',
@@ -92,6 +102,7 @@ export function MessageInput() {
     const maxVideoSize = 25 * 1024 * 1024; // 25 MB
 
     if (isImage && file.size > maxImageSize) {
+      console.warn('[MessageInput] Image too large:', file.size, 'bytes');
       toast({
         variant: 'destructive',
         title: 'Слишком большой файл',
@@ -101,6 +112,7 @@ export function MessageInput() {
     }
 
     if (isVideo && file.size > maxVideoSize) {
+      console.warn('[MessageInput] Video too large:', file.size, 'bytes');
       toast({
         variant: 'destructive',
         title: 'Слишком большой файл',
@@ -112,6 +124,7 @@ export function MessageInput() {
     const kind: UploadKind = isImage ? 'image' : 'video';
 
     try {
+      console.log('[MessageInput] Starting upload, kind=', kind);
       const storage = getStorage();
       const safeName = file.name.replace(/\s+/g, '-');
       const id =
@@ -123,16 +136,25 @@ export function MessageInput() {
         storage,
         `chat_uploads/${user.uid}/${id}-${safeName}`,
       );
+      
+      console.log('[MessageInput] Storage ref created:', `chat_uploads/${user.uid}/${id}-${safeName}`);
 
       // 1. Загрузка файла в Storage
+      console.log('[MessageInput] Uploading file...');
       await uploadBytes(storageRef, file, {
         contentType: file.type,
       });
+      
+      console.log('[MessageInput] File uploaded successfully');
 
       // 2. Получение публичной ссылки
+      console.log('[MessageInput] Getting download URL...');
       const url = await getDownloadURL(storageRef);
+      
+      console.log('[MessageInput] Download URL obtained:', url);
 
       // 3. Создание сообщения в Firestore с media
+      console.log('[MessageInput] Creating message in Firestore...');
       await addDocumentNonBlocking(messagesColRef, {
         authorId: user.uid,
         text: '', // медиасообщение без текста
@@ -143,14 +165,17 @@ export function MessageInput() {
           hint: file.name,
         },
       });
+      
+      console.log('[MessageInput] Message created successfully');
 
       toast({
         title: kind === 'image' ? 'Фото отправлено' : 'Видео отправлено',
         description: 'Файл успешно загружен и добавлен в чат.',
       });
     } catch (error) {
-      console.error('Upload error', error);
+      console.error('[MessageInput] Upload error:', error);
       const message = error instanceof Error ? error.message : String(error);
+      console.error('[MessageInput] Error message:', message);
       toast({
         variant: 'destructive',
         title: 'Ошибка загрузки',

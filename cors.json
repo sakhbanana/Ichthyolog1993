@@ -1,0 +1,8 @@
+[
+  {
+    "origin": ["https://studio-151048688-101d3.web.app", "http://localhost:*"],
+    "method": ["GET", "HEAD", "DELETE", "POST", "PUT", "OPTIONS"],
+    "responseHeader": ["Content-Type", "x-goog-meta-uploaded-content-type", "Authorization"],
+    "maxAgeSeconds": 3600
+  }
+]
