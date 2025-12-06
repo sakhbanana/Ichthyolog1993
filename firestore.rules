@@ -16,9 +16,8 @@ service cloud.firestore {
     match /group_chat/group/messages/{messageId} {
       allow read: if request.auth != null;
 
-      // Create message — user must be logged in and verified
-      allow create: if request.auth != null && 
-                    request.auth.token.email_verified == true &&
+      // Create message — user must be logged in
+      allow create: if request.auth != null &&
                     request.resource.data.authorId == request.auth.uid;
 
       // Update / Delete

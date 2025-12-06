@@ -76,16 +76,6 @@ export function MessageInput() {
       return;
     }
 
-    // Проверка email verification
-    if (!user.emailVerified) {
-      toast({
-        variant: 'destructive',
-        title: 'Email не подтверждён',
-        description: 'Подтвердите email для загрузки файлов.',
-      });
-      return;
-    }
-
     const isImage = file.type.startsWith('image/');
     const isVideo = file.type.startsWith('video/');
 

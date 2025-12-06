@@ -7,11 +7,10 @@ service firebase.storage {
       // Чтение доступно всем авторизованным пользователям
       allow read: if request.auth != null;
 
-      // Загрузка файла — только владелец с подтверждённым email
+      // Загрузка файла — только владелец
       // Ограничение размера: 25MB для видео, 5MB для изображений
       allow create: if request.auth != null &&
                     request.auth.uid == userId &&
-                    request.auth.token.email_verified == true &&
                     request.resource.size < 25 * 1024 * 1024 &&
                     (request.resource.contentType.matches('image/.*') ||
                      request.resource.contentType.matches('video/.*'));
