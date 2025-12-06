@@ -352,12 +352,12 @@ export function ChatSidebar({ currentUser, users }: ChatSidebarProps) {
             <AlertDialogTrigger asChild>
               <Button variant="link" className="mt-4 flex items-center gap-2 p-0 text-red-600 hover:text-red-700">
                 <Trash2 size={18} />
-                Удалить аккаунт
+                Удалить Аккаунт
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>Удалить аккаунт?</AlertDialogTitle>
+                <AlertDialogTitle>Удалить Аккаунт?</AlertDialogTitle>
                 <AlertDialogDescription>
                   Это действие необратимо. Все ваши данные и сообщения будут удалены.
                 </AlertDialogDescription>
