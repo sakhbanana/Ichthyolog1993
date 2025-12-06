@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, type ChangeEvent } from 'react';
-import { Paperclip, Image, Video, Send } from 'lucide-react';
+import { Paperclip, Image, Video, Send, Loader2 } from 'lucide-react';
 import { collection, serverTimestamp } from 'firebase/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useFirestore, useUser, addDocumentNonBlocking } from '@/firebase';
@@ -20,6 +20,7 @@ type UploadKind = 'image' | 'video';
 export function MessageInput() {
   const [message, setMessage] = useState('');
   const [uploadKind, setUploadKind] = useState<UploadKind | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const { toast } = useToast();
@@ -61,19 +62,12 @@ export function MessageInput() {
    * Обработка выбора файла и загрузка в Firebase Storage
    */
   const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
-    console.log('[MessageInput] handleFileChange called');
     const file = e.target.files?.[0];
     // очищаем value, чтобы можно было выбрать тот же файл повторно
     e.target.value = '';
 
-    if (!file) {
-      console.log('[MessageInput] No file selected');
-      return;
-    }
-    console.log('[MessageInput] File selected:', file.name, file.type, file.size);
-    
+    if (!file) return;
     if (!user || !firestore || !messagesColRef) {
-      console.error('[MessageInput] Missing dependencies: user=', !!user, 'firestore=', !!firestore, 'messagesColRef=', !!messagesColRef);
       toast({
         variant: 'destructive',
         title: 'Ошибка',
@@ -82,13 +76,20 @@ export function MessageInput() {
       return;
     }
 
+    // Проверка email verification
+    if (!user.emailVerified) {
+      toast({
+        variant: 'destructive',
+        title: 'Email не подтверждён',
+        description: 'Подтвердите email для загрузки файлов.',
+      });
+      return;
+    }
+
     const isImage = file.type.startsWith('image/');
     const isVideo = file.type.startsWith('video/');
 
-    console.log('[MessageInput] File type check: isImage=', isImage, 'isVideo=', isVideo);
-
     if (!isImage && !isVideo) {
-      console.error('[MessageInput] Unsupported file type:', file.type);
       toast({
         variant: 'destructive',
         title: 'Неподдерживаемый формат',
@@ -102,7 +103,6 @@ export function MessageInput() {
     const maxVideoSize = 25 * 1024 * 1024; // 25 MB
 
     if (isImage && file.size > maxImageSize) {
-      console.warn('[MessageInput] Image too large:', file.size, 'bytes');
       toast({
         variant: 'destructive',
         title: 'Слишком большой файл',
@@ -112,7 +112,6 @@ export function MessageInput() {
     }
 
     if (isVideo && file.size > maxVideoSize) {
-      console.warn('[MessageInput] Video too large:', file.size, 'bytes');
       toast({
         variant: 'destructive',
         title: 'Слишком большой файл',
@@ -123,8 +122,9 @@ export function MessageInput() {
 
     const kind: UploadKind = isImage ? 'image' : 'video';
 
+    setIsUploading(true);
+
     try {
-      console.log('[MessageInput] Starting upload, kind=', kind);
       const storage = getStorage();
       const safeName = file.name.replace(/\s+/g, '-');
       const id =
@@ -136,25 +136,16 @@ export function MessageInput() {
         storage,
         `chat_uploads/${user.uid}/${id}-${safeName}`,
       );
-      
-      console.log('[MessageInput] Storage ref created:', `chat_uploads/${user.uid}/${id}-${safeName}`);
 
       // 1. Загрузка файла в Storage
-      console.log('[MessageInput] Uploading file...');
       await uploadBytes(storageRef, file, {
         contentType: file.type,
       });
-      
-      console.log('[MessageInput] File uploaded successfully');
 
       // 2. Получение публичной ссылки
-      console.log('[MessageInput] Getting download URL...');
       const url = await getDownloadURL(storageRef);
-      
-      console.log('[MessageInput] Download URL obtained:', url);
 
       // 3. Создание сообщения в Firestore с media
-      console.log('[MessageInput] Creating message in Firestore...');
       await addDocumentNonBlocking(messagesColRef, {
         authorId: user.uid,
         text: '', // медиасообщение без текста
@@ -165,22 +156,31 @@ export function MessageInput() {
           hint: file.name,
         },
       });
-      
-      console.log('[MessageInput] Message created successfully');
 
       toast({
         title: kind === 'image' ? 'Фото отправлено' : 'Видео отправлено',
         description: 'Файл успешно загружен и добавлен в чат.',
       });
-    } catch (error) {
-      console.error('[MessageInput] Upload error:', error);
-      const message = error instanceof Error ? error.message : String(error);
-      console.error('[MessageInput] Error message:', message);
+    } catch (error: any) {
+      console.error('Upload error', error);
+      
+      let errorMessage = 'Не удалось загрузить файл. Попробуйте ещё раз.';
+      
+      if (error.code === 'storage/unauthorized') {
+        errorMessage = 'Недостаточно прав для загрузки. Проверьте подтверждение email.';
+      } else if (error.code === 'storage/quota-exceeded') {
+        errorMessage = 'Превышен лимит хранилища.';
+      } else if (error.code === 'storage/retry-limit-exceeded') {
+        errorMessage = 'Превышено время ожидания. Проверьте соединение.';
+      }
+      
       toast({
         variant: 'destructive',
         title: 'Ошибка загрузки',
-        description: message || 'Не удалось загрузить файл. Попробуйте ещё раз.',
+        description: errorMessage,
       });
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -199,6 +199,7 @@ export function MessageInput() {
             : 'image/*,video/*'
         }
         onChange={handleFileChange}
+        disabled={isUploading}
       />
 
       <Textarea
@@ -211,14 +212,24 @@ export function MessageInput() {
             handleSend();
           }
         }}
+        disabled={isUploading}
         className="min-h-[48px] resize-none rounded-2xl border-input bg-background p-3 pr-28 text-sm"
       />
 
       <div className="absolute bottom-2 right-2 flex items-center gap-1">
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8">
-              <Paperclip className="h-4 w-4" />
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-8 w-8"
+              disabled={isUploading}
+            >
+              {isUploading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Paperclip className="h-4 w-4" />
+              )}
               <span className="sr-only">Прикрепить файл</span>
             </Button>
           </PopoverTrigger>
@@ -228,6 +239,7 @@ export function MessageInput() {
                 variant="outline"
                 size="sm"
                 onClick={() => handleFileButtonClick('image')}
+                disabled={isUploading}
               >
                 <Image className="mr-2 h-4 w-4" />
                 Фото
@@ -236,6 +248,7 @@ export function MessageInput() {
                 variant="outline"
                 size="sm"
                 onClick={() => handleFileButtonClick('video')}
+                disabled={isUploading}
               >
                 <Video className="mr-2 h-4 w-4" />
                 Видео
@@ -249,7 +262,7 @@ export function MessageInput() {
           size="icon"
           className="h-8 w-8 bg-accent hover:bg-accent/90"
           onClick={handleSend}
-          disabled={!message.trim() || !user}
+          disabled={!message.trim() || !user || isUploading}
         >
           <Send className="h-4 w-4" />
           <span className="sr-only">Отправить</span>
