@@ -150,10 +150,11 @@ export function MessageInput() {
       });
     } catch (error) {
       console.error('Upload error', error);
+      const message = error instanceof Error ? error.message : String(error);
       toast({
         variant: 'destructive',
         title: 'Ошибка загрузки',
-        description: 'Не удалось загрузить файл. Попробуйте ещё раз.',
+        description: message || 'Не удалось загрузить файл. Попробуйте ещё раз.',
       });
     }
   };
