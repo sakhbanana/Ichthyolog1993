@@ -1,24 +1,28 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
-    match /{allPaths=**} {
-      // Allow read/write for authenticated users
-      allow read: if request.auth != null;
-      allow write: if request.auth != null;
-    }
 
     match /chat_uploads/{userId}/{fileName} {
-      allow read: if true;
-      // Upload file — only owner
-      allow write: if request.auth != null &&
-                   request.auth.uid == userId;
-      // Delete file — owner or admin
+
+      // Чтение доступно всем авторизованным пользователям
+      allow read: if request.auth != null;
+
+      // Загрузка файла — только владелец с подтверждённым email
+      // Ограничение размера: 25MB для видео, 5MB для изображений
+      allow create: if request.auth != null &&
+                    request.auth.uid == userId &&
+                    request.auth.token.email_verified == true &&
+                    request.resource.size < 25 * 1024 * 1024 &&
+                    (request.resource.contentType.matches('image/.*') ||
+                     request.resource.contentType.matches('video/.*'));
+
+      // Удаление файла — владелец или админ
       allow delete: if request.auth != null &&
                     (request.auth.uid == userId || isAdmin());
 
       function isAdmin() {
         return request.auth != null &&
-          get(/databases/(default)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+          firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.isAdmin == true;
       }
     }
   }
